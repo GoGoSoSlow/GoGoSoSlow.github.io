@@ -690,7 +690,7 @@ function renderFlash() {
     backHtml = `
       <div class="row"><div class="lbl">How do you do it?</div><div class="val">${item.how}</div></div>
       <div class="row"><div class="lbl">What does it do for you?</div><div class="val">${item.what}</div></div>
-      <div class="row"><div class="lbl">Key phrase</div><div class="val key">"${item.key}"</div></div>
+      <div class="row"><div class="lbl">Key phrase</div><div class="val key">REMEMBER, "${item.key}"</div></div>
     `;
   } else {
     backHtml = `
@@ -731,28 +731,46 @@ function renderFlash() {
 let clozeItem = null;
 let clozeBlanks = []; // indices of words that are blanked
 let clozeWords = [];
+let clozeBlankableFlags = []; // parallel array: which word indices are allowed to be blanked
 let clozeChecked = false;
 
 function clozeSourcePool() {
-  const habitItems = scopedHabits().map(h => ({
-    id: h.id,
-    title: h.name,
-    why: null,
-    text: `How do you do it? ${h.how} What does it do for you? ${h.what} Key phrase: remember, "${h.key}"`
-  }));
-  const pointItems = scopedPoints().map(p => ({ id: p.id, title: p.title, why: p.why, text: p.text }));
+  const habitItems = scopedHabits().map(h => {
+    const heading1 = tokenize("How do you do it?");
+    const content1 = tokenize(h.how);
+    const heading2 = tokenize("What does it do for you?");
+    const content2 = tokenize(h.what);
+    const heading3 = tokenize("Key Phrase");
+    const content3 = tokenize(`Remember, "${h.key}"`);
+    const words = [...heading1, ...content1, ...heading2, ...content2, ...heading3, ...content3];
+    const blankable = [
+      ...heading1.map(() => false),
+      ...content1.map(() => true),
+      ...heading2.map(() => false),
+      ...content2.map(() => true),
+      ...heading3.map(() => false),
+      ...content3.map(() => true),
+    ];
+    return { id: h.id, title: h.name, why: null, words, blankable };
+  });
+  const pointItems = scopedPoints().map(p => {
+    const words = tokenize(p.text);
+    const blankable = words.map(() => true);
+    return { id: p.id, title: p.title, why: p.why, words, blankable };
+  });
   return [...habitItems, ...pointItems];
 }
 
 function newCloze() {
   const pool = clozeSourcePool();
   clozeItem = pickWeighted(pool);
-  clozeWords = tokenize(clozeItem.text);
+  clozeWords = clozeItem.words;
+  clozeBlankableFlags = clozeItem.blankable;
   const lvl = mastery[clozeItem.id] ? mastery[clozeItem.id].level : 0;
   // blank ratio grows with mastery level: level0 ~15%, level5 ~60%
   const ratio = 0.15 + lvl * 0.09;
   const targetBlanks = Math.max(3, Math.round(clozeWords.length * ratio));
-  const idxs = clozeWords.map((_,i)=>i).filter(i => clozeWords[i].length > 2);
+  const idxs = clozeWords.map((_,i)=>i).filter(i => clozeBlankableFlags[i] && clozeWords[i].length > 2);
   // shuffle
   for (let i=idxs.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [idxs[i],idxs[j]]=[idxs[j],idxs[i]]; }
   clozeBlanks = idxs.slice(0, Math.min(targetBlanks, idxs.length)).sort((a,b)=>a-b);
@@ -848,7 +866,7 @@ let typeItem = null;
 let typeChecked = false;
 
 function newTypeItem() {
-  const pool = [...scopedHabits().map(h=>({id:h.id, title:h.name, text:h.key, label:'Key phrase', why:null})),
+  const pool = [...scopedHabits().map(h=>({id:h.id, title:h.name, text:`Remember, "${h.key}"`, label:'Key phrase', why:null})),
                 ...scopedPoints().map(p=>({id:p.id, title:p.title, text:p.text, label:'Full explanation', why:p.why}))];
   typeItem = pickWeighted(pool);
   typeChecked = false;
