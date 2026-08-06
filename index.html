@@ -387,6 +387,16 @@
       </div>
       <div class="settings-row">
         <div class="settings-row-text">
+          <div class="settings-row-title">Hide question prompts</div>
+          <div class="settings-row-desc">Hides "How do you do it?", "What does it do for you?", "Key Phrase" and "Why?" everywhere in the app — just the answers, no labels.</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="settingsHidePrompts">
+          <span class="switch-track"></span>
+        </label>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-text">
           <div class="settings-row-title">Reset progress</div>
           <div class="settings-row-desc">Clears mastery levels for every habit and point. Text size and quiz scope are kept.</div>
         </div>
@@ -401,6 +411,7 @@
     <button data-mode="cloze">Fill-in</button>
     <button data-mode="type">Type it out</button>
     <button data-mode="order">Order test</button>
+    <button data-mode="verbal">Verbal Practice</button>
     <button data-mode="progress">Progress</button>
   </nav>
 
@@ -536,6 +547,22 @@ async function saveBlankTitles() {
   await Store.set('blank-titles', String(blankTitles));
 }
 
+// ---------- HIDE QUESTION PROMPTS SETTING ----------
+let hidePrompts = false;
+
+async function loadHidePrompts() {
+  try {
+    const val = await Store.get('hide-prompts');
+    hidePrompts = val === 'true';
+  } catch (e) { hidePrompts = false; }
+  const toggle = document.getElementById('settingsHidePrompts');
+  if (toggle) toggle.checked = hidePrompts;
+}
+
+async function saveHidePrompts() {
+  await Store.set('hide-prompts', String(hidePrompts));
+}
+
 document.querySelectorAll('.scope-toggle button').forEach(btn => {
   btn.addEventListener('click', () => {
     quizScope = btn.dataset.scope;
@@ -547,6 +574,7 @@ document.querySelectorAll('.scope-toggle button').forEach(btn => {
     clozeItem = null;
     typeItem = null;
     orderList = [];
+    verbalSteps = [];
     render();
   });
 });
@@ -704,7 +732,7 @@ let currentMode = 'flash';
 async function loadMode() {
   try {
     const val = await Store.get('quiz-mode');
-    const valid = ['flash','cloze','type','order','progress'];
+    const valid = ['flash','cloze','type','order','verbal','progress'];
     if (val && valid.includes(val)) currentMode = val;
   } catch (e) { /* default stays */ }
   document.querySelectorAll('nav.modes button').forEach(b => {
@@ -732,6 +760,7 @@ function render() {
   else if (currentMode === 'cloze') renderCloze();
   else if (currentMode === 'type') renderType();
   else if (currentMode === 'order') renderOrder();
+  else if (currentMode === 'verbal') renderVerbal();
   else if (currentMode === 'progress') renderProgress();
 }
 
@@ -752,14 +781,17 @@ function renderFlash() {
   let backHtml = '';
   if (isHabit) {
     backHtml = `
-      <div class="row"><div class="lbl">How do you do it?</div><div class="val">${item.how}</div></div>
-      <div class="row"><div class="lbl">What does it do for you?</div><div class="val">${item.what}</div></div>
-      <div class="row"><div class="lbl">Key phrase</div><div class="val key">REMEMBER, "${item.key}"</div></div>
+      ${hidePrompts ? '' : '<div class="row"><div class="lbl">How do you do it?</div></div>'}
+      <div class="row"><div class="val">${item.how}</div></div>
+      ${hidePrompts ? '' : '<div class="row"><div class="lbl">What does it do for you?</div></div>'}
+      <div class="row"><div class="val">${item.what}</div></div>
+      ${hidePrompts ? '' : '<div class="row"><div class="lbl">Key phrase</div></div>'}
+      <div class="row"><div class="val key">REMEMBER, "${item.key}"</div></div>
     `;
   } else {
     backHtml = `
       <div class="row"><div class="lbl">Explanation</div><div class="val">${item.text}</div></div>
-      <div class="row"><div class="lbl">Why?</div><div class="val key">${item.why}</div></div>
+      ${hidePrompts ? `<div class="row"><div class="val key">${item.why}</div></div>` : `<div class="row"><div class="lbl">Why?</div><div class="val key">${item.why}</div></div>`}
     `;
   }
   app.innerHTML = `
@@ -802,11 +834,11 @@ let clozeChecked = false;
 function clozeSourcePool() {
   const habitItems = scopedHabits().map((h, idx) => {
     const titleWords = blankTitles ? tokenize(h.name) : [];
-    const heading1 = tokenize("How do you do it?");
+    const heading1 = hidePrompts ? [] : tokenize("How do you do it?");
     const content1 = tokenize(h.how);
-    const heading2 = tokenize("What does it do for you?");
+    const heading2 = hidePrompts ? [] : tokenize("What does it do for you?");
     const content2 = tokenize(h.what);
-    const heading3 = tokenize("Key Phrase");
+    const heading3 = hidePrompts ? [] : tokenize("Key Phrase");
     const leadIn = tokenize("Remember,");
     const content3 = tokenize(`"${h.key}"`);
     const words = [...titleWords, ...heading1, ...content1, ...heading2, ...content2, ...heading3, ...leadIn, ...content3];
@@ -892,7 +924,7 @@ function renderCloze() {
       <div class="eyebrow">${clozeItem.listLabel} · Item ${clozeItem.itemNumber} of ${clozeItem.listTotal} · Fill-in · Mastery level ${lvl}/5</div>
       ${clozeItem.showTitleSeparately ? `<div style="font-weight:700; margin-bottom:10px;">${clozeItem.title}</div>` : ''}
       <div class="cloze-text" id="clozeText">${html}</div>
-      ${clozeItem.why ? `<div class="why-tag"><b>Why?</b> ${clozeItem.why}</div>` : ''}
+      ${clozeItem.why ? (hidePrompts ? `<div class="why-tag">${clozeItem.why}</div>` : `<div class="why-tag"><b>Why?</b> ${clozeItem.why}</div>`) : ''}
       <div class="btnrow">
         <button class="btn ghost" id="btnSkip">Skip</button>
         <button class="btn primary" id="btnCheck" ${clozeChecked?'disabled':''}>Check</button>
@@ -1090,6 +1122,113 @@ function renderOrder() {
   });
 }
 
+// ----- VERBAL PRACTICE -----
+let verbalSteps = [];
+let verbalIndex = 0;
+let verbalResults = [];
+let verbalFinished = false;
+
+function splitSentences(text) {
+  const matches = text.match(/[^.!?]+[.!?]+/g);
+  if (!matches) return [text.trim()];
+  return matches.map(s => s.trim()).filter(Boolean);
+}
+
+function buildVerbalSteps(scope) {
+  const steps = [];
+  if (scope !== 'points') {
+    fiveHabits.forEach((h, idx) => {
+      const itemNumber = idx + 1, listTotal = fiveHabits.length;
+      const base = { itemId: h.id, itemTitle: h.name, listLabel: '5s', itemNumber, listTotal };
+      steps.push({ ...base, label: null, text: h.name, part: 'title' });
+      steps.push({ ...base, label: 'How do you do it?', text: h.how, part: 'how' });
+      steps.push({ ...base, label: 'What does it do for you?', text: h.what, part: 'what' });
+      steps.push({ ...base, label: 'Key Phrase', text: `Remember, "${h.key}"`, part: 'key' });
+    });
+  }
+  if (scope !== 'habits') {
+    tenPoints.forEach((p, idx) => {
+      const itemNumber = idx + 1, listTotal = tenPoints.length;
+      const base = { itemId: p.id, itemTitle: p.title, listLabel: '10s', itemNumber, listTotal };
+      steps.push({ ...base, label: null, text: p.title, part: 'title' });
+      splitSentences(p.text).forEach(sentence => {
+        steps.push({ ...base, label: null, text: sentence, part: 'body' });
+      });
+      steps.push({ ...base, label: 'Why?', text: p.why, part: 'why' });
+    });
+  }
+  return steps;
+}
+
+function startVerbalSession() {
+  verbalSteps = buildVerbalSteps(quizScope);
+  verbalIndex = 0;
+  verbalResults = new Array(verbalSteps.length).fill(null);
+  verbalFinished = false;
+}
+
+function renderVerbal() {
+  if (!verbalSteps.length) startVerbalSession();
+  if (verbalFinished) { renderVerbalSummary(); return; }
+  const step = verbalSteps[verbalIndex];
+  app.innerHTML = `
+    <div class="card" id="verbalCard">
+      <div class="eyebrow">${step.listLabel} · Item ${step.itemNumber} of ${step.listTotal} · Verbal Practice · Sentence ${verbalIndex + 1} of ${verbalSteps.length}</div>
+      ${(!hidePrompts && step.label) ? `<div class="cloze-heading" style="margin-bottom:8px;">${step.label}</div>` : ''}
+      <div class="flash-title" style="text-align:left; font-size:1.15rem; line-height:1.4;">${step.text}</div>
+      <div class="btnrow" style="margin-top:20px;">
+        <button class="btn miss" id="verbalMiss">Missed it</button>
+        <button class="btn got" id="verbalGot">Got it</button>
+      </div>
+    </div>
+    <div class="helptext">Say it out loud, then mark whether you got it right. You'll see everything you missed at the end.</div>
+  `;
+  const cardEl = document.getElementById('verbalCard');
+  if (cardEl) cardEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('verbalMiss').addEventListener('click', () => recordVerbal(false));
+  document.getElementById('verbalGot').addEventListener('click', () => recordVerbal(true));
+}
+
+function recordVerbal(correct) {
+  const step = verbalSteps[verbalIndex];
+  verbalResults[verbalIndex] = correct;
+  bumpMastery(step.itemId, correct);
+  verbalIndex++;
+  if (verbalIndex >= verbalSteps.length) verbalFinished = true;
+  renderVerbal();
+}
+
+function renderVerbalSummary() {
+  const total = verbalSteps.length;
+  const correctCount = verbalResults.filter(r => r === true).length;
+  const pct = total ? Math.round((correctCount / total) * 100) : 100;
+  const color = pct === 100 ? 'var(--green)' : pct >= 60 ? 'var(--amber)' : 'var(--red)';
+  const rowsHtml = verbalSteps.map((step, i) => {
+    const ok = verbalResults[i];
+    const cls = ok ? 'correct' : 'incorrect';
+    const icon = ok ? '✓' : '✕';
+    const iconColor = ok ? 'var(--green)' : 'var(--red)';
+    const labelBit = (step.label && !hidePrompts) ? `${step.label} ` : '';
+    return `<li class="order-item ${cls}">
+      <span class="num" style="color:${iconColor};">${icon}</span>
+      <span class="item-title">${step.listLabel} · ${step.itemTitle} — ${labelBit}${step.text}</span>
+    </li>`;
+  }).join('');
+  app.innerHTML = `
+    <div class="card">
+      <div class="eyebrow">Verbal Practice · Results</div>
+      <div style="margin-bottom:14px;">
+        <span class="score-badge" style="background:${color}22;color:${color};">${correctCount}/${total} correct</span>
+      </div>
+      <ul class="order-list">${rowsHtml}</ul>
+      <div class="btnrow" style="margin-top:14px;">
+        <button class="btn primary" id="verbalRestart">Start over</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('verbalRestart').addEventListener('click', () => { startVerbalSession(); renderVerbal(); });
+}
+
 // ----- PROGRESS -----
 function renderProgress() {
   function rows(list, label) {
@@ -1154,9 +1293,15 @@ document.getElementById('settingsBlankTitles').addEventListener('change', (e) =>
     render();
   }
 });
+document.getElementById('settingsHidePrompts').addEventListener('change', (e) => {
+  hidePrompts = e.target.checked;
+  saveHidePrompts();
+  if (currentMode === 'cloze') clozeItem = null; // heading tokens are built at pool time, need a fresh item
+  if (['flash','cloze','verbal'].includes(currentMode)) render();
+});
 
 // ---------- INIT ----------
-Promise.all([loadScope(), loadFontScale(), loadMastery(), loadMode(), loadBlankTitles()]).then(render);
+Promise.all([loadScope(), loadFontScale(), loadMastery(), loadMode(), loadBlankTitles(), loadHidePrompts()]).then(render);
 </script>
 </body>
 </html>
