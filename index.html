@@ -24,7 +24,7 @@
   }
   * { box-sizing: border-box; }
   html {
-    font-size: 118%; /* base scale adjusted live via --font-scale below */
+    font-size: 118%; /* base scale, adjusted live via --font-scale below */
   }
   html, body {
     margin: 0; padding: 0;
@@ -403,7 +403,7 @@
         <button class="btn miss" id="settingsResetProgress">Reset</button>
       </div>
       <div class="settings-storage-note" id="storageNote"></div>
-      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v6 (adds Verbal Practice, Hide prompts)</div>
+      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v8 (Verbal Practice: sentence stays, Reveal next)</div>
     </div>
   </div>
 
@@ -1161,40 +1161,59 @@ function buildVerbalSteps(scope) {
   return steps;
 }
 
+let verbalAwaitingNext = false; // true once the current sentence has been marked, waiting for "Reveal next"
+
 function startVerbalSession() {
   verbalSteps = buildVerbalSteps(quizScope);
   verbalIndex = 0;
   verbalResults = new Array(verbalSteps.length).fill(null);
   verbalFinished = false;
+  verbalAwaitingNext = false;
 }
 
 function renderVerbal() {
   if (!verbalSteps.length) startVerbalSession();
   if (verbalFinished) { renderVerbalSummary(); return; }
   const step = verbalSteps[verbalIndex];
+  const labelHtml = (!hidePrompts && step.label) ? `<div class="cloze-heading" style="margin-bottom:8px;">${step.label}</div>` : '';
+  const buttonsHtml = verbalAwaitingNext
+    ? `<div class="btnrow" style="margin-top:20px;">
+         <button class="btn primary" id="verbalNext">Reveal next</button>
+       </div>`
+    : `<div class="btnrow" style="margin-top:20px;">
+         <button class="btn miss" id="verbalMiss">Missed it</button>
+         <button class="btn got" id="verbalGot">Got it</button>
+       </div>`;
   app.innerHTML = `
     <div class="card" id="verbalCard">
       <div class="eyebrow">${step.listLabel} · Item ${step.itemNumber} of ${step.listTotal} · Verbal Practice · Sentence ${verbalIndex + 1} of ${verbalSteps.length}</div>
-      ${(!hidePrompts && step.label) ? `<div class="cloze-heading" style="margin-bottom:8px;">${step.label}</div>` : ''}
+      ${labelHtml}
       <div class="flash-title" style="text-align:left; font-size:1.15rem; line-height:1.4;">${step.text}</div>
-      <div class="btnrow" style="margin-top:20px;">
-        <button class="btn miss" id="verbalMiss">Missed it</button>
-        <button class="btn got" id="verbalGot">Got it</button>
-      </div>
+      ${buttonsHtml}
     </div>
     <div class="helptext">Say it out loud, then mark whether you got it right. You'll see everything you missed at the end.</div>
   `;
   const cardEl = document.getElementById('verbalCard');
   if (cardEl) cardEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  document.getElementById('verbalMiss').addEventListener('click', () => recordVerbal(false));
-  document.getElementById('verbalGot').addEventListener('click', () => recordVerbal(true));
+  const missBtn = document.getElementById('verbalMiss');
+  const gotBtn = document.getElementById('verbalGot');
+  const nextBtn = document.getElementById('verbalNext');
+  if (missBtn) missBtn.addEventListener('click', () => recordVerbal(false));
+  if (gotBtn) gotBtn.addEventListener('click', () => recordVerbal(true));
+  if (nextBtn) nextBtn.addEventListener('click', advanceVerbal);
 }
 
 function recordVerbal(correct) {
   const step = verbalSteps[verbalIndex];
   verbalResults[verbalIndex] = correct;
   bumpMastery(step.itemId, correct);
+  verbalAwaitingNext = true; // keep this sentence on screen; swap buttons for "Reveal next"
+  renderVerbal();
+}
+
+function advanceVerbal() {
   verbalIndex++;
+  verbalAwaitingNext = false;
   if (verbalIndex >= verbalSteps.length) verbalFinished = true;
   renderVerbal();
 }
