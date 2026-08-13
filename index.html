@@ -206,6 +206,14 @@
     padding: 4px 10px; border-radius: 3px; font-size: 0.85rem;
   }
 
+  .cloze-nav { display: flex; gap: 8px; margin-bottom: 14px; }
+  .cloze-nav .btn { padding: 9px 10px; font-size: 0.78rem; }
+  .cloze-divider {
+    height: 1px;
+    background: var(--line);
+    margin: 12px 0;
+    width: 100%;
+  }
   .cloze-text { line-height: 2.1; font-size: 0.98rem; }
   .cloze-heading {
     color: var(--amber);
@@ -403,7 +411,7 @@
         <button class="btn miss" id="settingsResetProgress">Reset</button>
       </div>
       <div class="settings-storage-note" id="storageNote"></div>
-      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v8 (Verbal Practice: sentence stays, Reveal next)</div>
+      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v10 (Fill-in: blank titles now blanks Why too, added dividers)</div>
     </div>
   </div>
 
@@ -831,6 +839,7 @@ let clozeWords = [];
 let clozeBlankableFlags = []; // parallel array: which word indices are allowed to be blanked
 let clozeWordTypes = []; // parallel array: 'heading' or 'content' per word index
 let clozeChecked = false;
+let clozePoolIndex = -1; // position of the current item within the current scoped pool
 
 function clozeSourcePool() {
   const habitItems = scopedHabits().map((h, idx) => {
@@ -854,7 +863,7 @@ function clozeSourcePool() {
       ...content3.map(() => true),
     ];
     const types = [
-      ...titleWords.map(() => 'content'),
+      ...titleWords.map(() => 'title'),
       ...heading1.map(() => 'heading'),
       ...content1.map(() => 'content'),
       ...heading2.map(() => 'heading'),
@@ -872,11 +881,12 @@ function clozeSourcePool() {
   const pointItems = scopedPoints().map((p, idx) => {
     const titleWords = blankTitles ? tokenize(p.title) : [];
     const bodyWords = tokenize(p.text);
-    const words = [...titleWords, ...bodyWords];
-    const blankable = [...titleWords.map(() => true), ...bodyWords.map(() => true)];
-    const types = [...titleWords.map(() => 'content'), ...bodyWords.map(() => 'content')];
+    const whyWords = blankTitles ? tokenize(p.why) : [];
+    const words = [...titleWords, ...bodyWords, ...whyWords];
+    const blankable = [...titleWords.map(() => true), ...bodyWords.map(() => true), ...whyWords.map(() => true)];
+    const types = [...titleWords.map(() => 'title'), ...bodyWords.map(() => 'content'), ...whyWords.map(() => 'why')];
     return {
-      id: p.id, title: p.title, why: p.why, words, blankable, types,
+      id: p.id, title: p.title, why: blankTitles ? null : p.why, words, blankable, types,
       listLabel: '10s', itemNumber: idx + 1, listTotal: tenPoints.length,
       showTitleSeparately: !blankTitles
     };
@@ -884,13 +894,13 @@ function clozeSourcePool() {
   return [...habitItems, ...pointItems];
 }
 
-function newCloze() {
-  const pool = clozeSourcePool();
-  clozeItem = pickWeighted(pool);
-  clozeWords = clozeItem.words;
-  clozeBlankableFlags = clozeItem.blankable;
-  clozeWordTypes = clozeItem.types;
-  const lvl = mastery[clozeItem.id] ? mastery[clozeItem.id].level : 0;
+// Applies a cloze item and (re)computes its blanks based on the item's current mastery level.
+function applyClozeItem(item) {
+  clozeItem = item;
+  clozeWords = item.words;
+  clozeBlankableFlags = item.blankable;
+  clozeWordTypes = item.types;
+  const lvl = mastery[item.id] ? mastery[item.id].level : 0;
   // blank ratio grows with mastery level: level0 ~15%, level5 ~60%
   const ratio = 0.15 + lvl * 0.09;
   const targetBlanks = Math.max(3, Math.round(clozeWords.length * ratio));
@@ -901,6 +911,38 @@ function newCloze() {
   clozeChecked = false;
 }
 
+function newCloze() {
+  const pool = clozeSourcePool();
+  const item = pickWeighted(pool);
+  clozePoolIndex = pool.findIndex(p => p.id === item.id);
+  applyClozeItem(item);
+}
+
+// Move to a specific position in the current scoped pool (wraps around both ends).
+function clozeGoTo(targetIndex) {
+  const pool = clozeSourcePool();
+  if (!pool.length) return;
+  let idx = targetIndex;
+  if (idx < 0) idx = pool.length - 1;
+  if (idx >= pool.length) idx = 0;
+  clozePoolIndex = idx;
+  applyClozeItem(pool[idx]);
+}
+
+function clozeNext() { clozeGoTo(clozePoolIndex + 1); }
+function clozePrev() { clozeGoTo(clozePoolIndex - 1); }
+
+// Redo the exact same item (used from the check screen) — regenerates blanks using
+// the item's current (possibly just-updated) mastery level, so repeated drilling
+// naturally gets harder as you improve.
+function clozeRepeat() {
+  const pool = clozeSourcePool();
+  const idx = pool.findIndex(p => p.id === clozeItem.id);
+  if (idx === -1) { newCloze(); return; }
+  clozePoolIndex = idx;
+  applyClozeItem(pool[idx]);
+}
+
 function renderCloze() {
   if (!clozeItem) newCloze();
   const lvl = mastery[clozeItem.id] ? mastery[clozeItem.id].level : 0;
@@ -909,7 +951,11 @@ function renderCloze() {
   clozeWords.forEach((w, i) => {
     const type = clozeWordTypes[i] || 'content';
     if (prevType !== null && type !== prevType) {
-      html += '<br>';
+      if (type === 'title' || prevType === 'title' || type === 'why' || prevType === 'why') {
+        html += '<div class="cloze-divider"></div>';
+      } else {
+        html += '<br>';
+      }
     }
     if (type === 'heading') {
       html += `<span class="cloze-heading">${w}</span> `;
@@ -924,6 +970,11 @@ function renderCloze() {
     <div class="card">
       <div class="eyebrow">${clozeItem.listLabel} · Item ${clozeItem.itemNumber} of ${clozeItem.listTotal} · Fill-in · Mastery level ${lvl}/5</div>
       ${clozeItem.showTitleSeparately ? `<div style="font-weight:700; margin-bottom:10px;">${clozeItem.title}</div>` : ''}
+      ${!clozeChecked ? `
+      <div class="cloze-nav">
+        <button class="btn ghost" id="btnClozePrev">‹ Prev</button>
+        <button class="btn ghost" id="btnClozeNext">Next ›</button>
+      </div>` : ''}
       <div class="cloze-text" id="clozeText">${html}</div>
       ${clozeItem.why ? (hidePrompts ? `<div class="why-tag">${clozeItem.why}</div>` : `<div class="why-tag"><b>Why?</b> ${clozeItem.why}</div>`) : ''}
       <div class="btnrow">
@@ -936,6 +987,10 @@ function renderCloze() {
   `;
   document.getElementById('btnSkip').addEventListener('click', () => { newCloze(); renderCloze(); });
   document.getElementById('btnCheck').addEventListener('click', checkCloze);
+  const prevBtn = document.getElementById('btnClozePrev');
+  const nextBtn = document.getElementById('btnClozeNext');
+  if (prevBtn) prevBtn.addEventListener('click', () => { clozePrev(); renderCloze(); });
+  if (nextBtn) nextBtn.addEventListener('click', () => { clozeNext(); renderCloze(); });
 }
 
 function checkCloze() {
@@ -984,13 +1039,20 @@ function checkCloze() {
      <span class="why-tag" style="display:block; margin-top:6px;">Tap any red word to check the correct answer.</span>`;
   bumpMastery(clozeItem.id, pct >= 75);
   document.getElementById('btnCheck').disabled = true;
+  const btnRow = document.createElement('div');
+  btnRow.className = 'btnrow';
+  btnRow.style.marginTop = '10px';
+  const repeatBtn = document.createElement('button');
+  repeatBtn.className = 'btn ghost';
+  repeatBtn.textContent = 'Repeat this item';
+  repeatBtn.addEventListener('click', () => { clozeRepeat(); renderCloze(); });
   const nextBtn = document.createElement('button');
   nextBtn.className = 'btn primary';
   nextBtn.textContent = 'Next';
-  nextBtn.style.marginTop = '8px';
   nextBtn.addEventListener('click', () => { newCloze(); renderCloze(); });
-  document.getElementById('clozeResult').appendChild(document.createElement('br'));
-  document.getElementById('clozeResult').appendChild(nextBtn);
+  btnRow.appendChild(repeatBtn);
+  btnRow.appendChild(nextBtn);
+  document.getElementById('clozeResult').appendChild(btnRow);
 }
 
 // ----- TYPE IT OUT -----
