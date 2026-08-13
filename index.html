@@ -197,6 +197,39 @@
   textarea.answer:focus { outline: none; border-color: var(--amber); }
 
   .diff-line { line-height: 1.9; font-size: 0.95rem; margin-top: 4px;}
+
+  .type-box {
+    background: var(--asphalt); border: 1px solid var(--line); border-radius: 4px;
+    padding: 12px; min-height: 110px; max-height: 260px; overflow-y: auto;
+    line-height: 1.9; font-size: 0.98rem; cursor: text;
+    -webkit-overflow-scrolling: touch;
+  }
+  .type-word {
+    cursor: pointer; border-bottom: 1px dotted transparent; padding: 0 1px;
+  }
+  .type-word:hover { border-bottom-color: var(--text-dim2); }
+  .type-word-punct { color: var(--text-dim2); padding: 0 1px; }
+  .type-input {
+    background: transparent; border: none; outline: none;
+    color: var(--text); font-family: inherit; font-size: 0.98rem;
+    border-bottom: 2px solid var(--amber); padding: 0 2px; min-width: 2ch;
+    width: auto;
+  }
+  .type-input.wrong { border-bottom-color: var(--red); background: rgba(217,83,79,0.15); color: var(--red); }
+  .type-hint-row {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  .type-hint-box {
+    font-family: var(--mono); font-size: 0.8rem; color: var(--text-dim2);
+    background: var(--panel2); border: 1px solid var(--line); border-radius: 4px;
+    padding: 8px 10px; flex: 1 1 auto;
+  }
+  .type-hint-box span { color: var(--amber); font-weight: 700; }
+  .type-hint-count {
+    font-family: var(--mono); font-size: 0.72rem; color: var(--text-dim2);
+    white-space: nowrap;
+  }
   .diff-line .ok { color: var(--green); }
   .diff-line .bad { color: var(--red); text-decoration: line-through; text-decoration-color: rgba(217,83,79,0.6); }
   .diff-line .miss { color: var(--amber); border-bottom: 1px dotted var(--amber); }
@@ -411,7 +444,7 @@
         <button class="btn miss" id="settingsResetProgress">Reset</button>
       </div>
       <div class="settings-storage-note" id="storageNote"></div>
-      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v10 (Fill-in: blank titles now blanks Why too, added dividers)</div>
+      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v13 (Type it out: full habit text, dash auto-fill)</div>
     </div>
   </div>
 
@@ -1057,59 +1090,260 @@ function checkCloze() {
 
 // ----- TYPE IT OUT -----
 let typeItem = null;
-let typeChecked = false;
+let typePoolIndex = -1;
+let typeTargetWords = [];   // flat tokenized target words (content only — headings aren't typed)
+let typeChunkBounds = [];   // [{start, end, label}] — which word-index range belongs to which labeled chunk
+let typeCommitted = [];     // words locked in so far (correct, displayed with real punctuation)
+let typeCurrentIndex = 0;   // index into typeTargetWords currently being typed
+let typeHintCount = 0;
+let typeHintedPositions = new Set(); // unique word indices that needed a hint
+let typeFinished = false;
+
+function typeSourcePool() {
+  const habitItems = scopedHabits().map((h, idx) => ({
+    id: h.id, title: h.name,
+    chunks: [
+      { label: hidePrompts ? null : 'How do you do it?', words: tokenize(h.how) },
+      { label: hidePrompts ? null : 'What does it do for you?', words: tokenize(h.what) },
+      { label: hidePrompts ? null : 'Key Phrase', words: tokenize(`Remember, "${h.key}"`) },
+    ],
+    listLabel: '5s', itemNumber: idx + 1, listTotal: fiveHabits.length
+  }));
+  const pointItems = scopedPoints().map((p, idx) => ({
+    id: p.id, title: p.title,
+    chunks: [ { label: null, words: tokenize(p.text) } ],
+    listLabel: '10s', itemNumber: idx + 1, listTotal: tenPoints.length
+  }));
+  return [...habitItems, ...pointItems];
+}
+
+// Words that are pure punctuation (e.g. a lone " – ") normalize to an empty string and can
+// never be "typed correctly" on their own — auto-fill them once the word before is confirmed.
+function autoFillPunctuationWords() {
+  while (typeCurrentIndex < typeTargetWords.length && normWord(typeTargetWords[typeCurrentIndex]).length === 0) {
+    typeCommitted.push(typeTargetWords[typeCurrentIndex]);
+    typeCurrentIndex++;
+  }
+}
+
+function applyTypeItem(item) {
+  typeItem = item;
+  typeTargetWords = [];
+  typeChunkBounds = [];
+  let pos = 0;
+  item.chunks.forEach(chunk => {
+    const start = pos;
+    typeTargetWords.push(...chunk.words);
+    pos += chunk.words.length;
+    typeChunkBounds.push({ start, end: pos, label: chunk.label });
+  });
+  typeCommitted = [];
+  typeCurrentIndex = 0;
+  typeHintCount = 0;
+  typeHintedPositions = new Set();
+  typeFinished = false;
+  autoFillPunctuationWords();
+}
 
 function newTypeItem() {
-  const pool = [...scopedHabits().map(h=>({id:h.id, title:h.name, text:`Remember, "${h.key}"`, label:'Key phrase', why:null})),
-                ...scopedPoints().map(p=>({id:p.id, title:p.title, text:p.text, label:'Full explanation', why:p.why}))];
-  typeItem = pickWeighted(pool);
-  typeChecked = false;
+  const pool = typeSourcePool();
+  const item = pickWeighted(pool);
+  typePoolIndex = pool.findIndex(p => p.id === item.id);
+  applyTypeItem(item);
+}
+
+function typeGoTo(targetIndex) {
+  const pool = typeSourcePool();
+  if (!pool.length) return;
+  let idx = targetIndex;
+  if (idx < 0) idx = pool.length - 1;
+  if (idx >= pool.length) idx = 0;
+  typePoolIndex = idx;
+  applyTypeItem(pool[idx]);
+}
+function typeNextItem() { typeGoTo(typePoolIndex + 1); }
+function typePrevItem() { typeGoTo(typePoolIndex - 1); }
+function typeRepeatItem() {
+  const pool = typeSourcePool();
+  const idx = pool.findIndex(p => p.id === typeItem.id);
+  if (idx === -1) { newTypeItem(); return; }
+  typePoolIndex = idx;
+  applyTypeItem(pool[idx]);
 }
 
 function renderType() {
   if (!typeItem) newTypeItem();
+  if (typeFinished) { renderTypeSummary(); return; }
   const item = typeItem;
   app.innerHTML = `
-    <div class="card">
-      <div class="eyebrow">Type it out · ${item.label}</div>
+    <div class="card" id="typeCard">
+      <div class="eyebrow">${item.listLabel} · Item ${item.itemNumber} of ${item.listTotal} · Type it out · Word ${typeCommitted.length + 1} of ${typeTargetWords.length}</div>
       <div style="font-weight:700; margin-bottom:10px;">${item.title}</div>
-      <textarea class="answer" id="typeAnswer" placeholder="Type it from memory…"></textarea>
-      <div class="btnrow">
-        <button class="btn ghost" id="btnReveal">Reveal &amp; skip</button>
-        <button class="btn primary" id="btnCheckType">Check</button>
+      <div class="type-box" id="typeBox"><span id="typeCommittedWords"></span><input id="typeInput" class="type-input" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false"></div>
+      <div class="type-hint-row">
+        <div class="type-hint-box" id="typeHintBox">Hint: <span id="typeHintWord">—</span></div>
+        <button class="btn ghost" id="btnTypeHint">Hint (Tab)</button>
+        <span class="type-hint-count" id="typeHintCount">Hints: 0</span>
       </div>
-      <div id="typeResult" style="margin-top:12px;"></div>
     </div>
-    <div class="helptext">Type the passage from memory, then check — matched words are highlighted green, missed reference words show in amber where they should have appeared.</div>
+    <div class="helptext">Type each word, then hit space to check it. A wrong word turns red and blocks you — backspace to fix it, or hint it. Tap any word you've already typed to redo it (counts as a hint). Tab or the Hint button reveals the next word.</div>
   `;
-  document.getElementById('btnCheckType').addEventListener('click', checkType);
-  document.getElementById('btnReveal').addEventListener('click', () => {
-    document.getElementById('typeResult').innerHTML = `<div class="diff-line">${item.text}</div>`;
-    bumpMastery(item.id, false);
-    setTimeout(() => { newTypeItem(); renderType(); }, 1400);
+  const box = document.getElementById('typeBox');
+  const input = document.getElementById('typeInput');
+  const committedSpan = document.getElementById('typeCommittedWords');
+
+  function scrollBoxToBottom() { box.scrollTop = box.scrollHeight; }
+
+  function chunkIndexForWord(wordIdx) {
+    for (let c = 0; c < typeChunkBounds.length; c++) {
+      if (wordIdx >= typeChunkBounds[c].start && wordIdx < typeChunkBounds[c].end) return c;
+    }
+    return typeChunkBounds.length - 1;
+  }
+
+  function renderCommittedWords() {
+    // Render chunk by chunk, up through whichever chunk the cursor is currently in,
+    // so the "How do you do it? / What does it do for you? / Key Phrase" labels show
+    // in the right place without ever being something the user has to type themselves.
+    const upToChunk = chunkIndexForWord(Math.min(typeCurrentIndex, typeTargetWords.length - 1));
+    let html = '';
+    for (let c = 0; c <= upToChunk; c++) {
+      const bounds = typeChunkBounds[c];
+      if (c > 0) html += '<div class="cloze-divider"></div>';
+      if (bounds.label) html += `<span class="cloze-heading">${bounds.label}</span> `;
+      const end = Math.min(bounds.end, typeCommitted.length);
+      for (let i = bounds.start; i < end; i++) {
+        if (normWord(typeTargetWords[i]).length === 0) {
+          html += `<span class="type-word-punct">${typeCommitted[i]}</span> `;
+        } else {
+          html += `<span class="type-word" data-idx="${i}">${typeCommitted[i]}</span> `;
+        }
+      }
+    }
+    committedSpan.innerHTML = html;
+    committedSpan.querySelectorAll('.type-word').forEach(el => {
+      el.addEventListener('click', () => {
+        const idx = parseInt(el.dataset.idx);
+        fixFromIndex(idx);
+      });
+    });
+    scrollBoxToBottom();
+  }
+
+  function updateEyebrow() {
+    const eyebrow = document.querySelector('#typeCard .eyebrow');
+    if (eyebrow) eyebrow.textContent = `${item.listLabel} · Item ${item.itemNumber} of ${item.listTotal} · Type it out · Word ${typeCommitted.length + 1} of ${typeTargetWords.length}`;
+  }
+
+  function updateHintUI(revealedWord) {
+    document.getElementById('typeHintWord').textContent = revealedWord || '—';
+    document.getElementById('typeHintCount').textContent = `Hints: ${typeHintCount}`;
+  }
+
+  function fixFromIndex(idx) {
+    typeCommitted = typeCommitted.slice(0, idx);
+    typeCurrentIndex = idx;
+    typeHintCount++;
+    typeHintedPositions.add(idx);
+    input.value = '';
+    input.classList.remove('wrong');
+    renderCommittedWords();
+    updateEyebrow();
+    updateHintUI(typeTargetWords[idx]);
+    input.focus();
+  }
+
+  function giveHint() {
+    if (typeCurrentIndex >= typeTargetWords.length) return;
+    typeHintCount++;
+    typeHintedPositions.add(typeCurrentIndex);
+    updateHintUI(typeTargetWords[typeCurrentIndex]);
+    input.focus();
+  }
+
+  function finishItem() {
+    bumpMastery(item.id, typeHintCount === 0);
+    typeFinished = true;
+    renderTypeSummary();
+  }
+
+  function commitWord() {
+    const raw = input.value;
+    if (!raw.trim()) return; // ignore extra spaces with nothing typed
+    const target = typeTargetWords[typeCurrentIndex];
+    if (normWord(raw) === normWord(target) && normWord(target).length > 0) {
+      typeCommitted.push(target);
+      typeCurrentIndex++;
+      autoFillPunctuationWords();
+      input.value = '';
+      input.classList.remove('wrong');
+      updateHintUI(null);
+      renderCommittedWords();
+      updateEyebrow();
+      if (typeCurrentIndex >= typeTargetWords.length) { finishItem(); return; }
+    } else {
+      input.classList.add('wrong');
+    }
+  }
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === ' ') {
+      e.preventDefault();
+      commitWord();
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      giveHint();
+    }
   });
+  // Mobile virtual keyboards (Gboard, Samsung Keyboard, etc.) often don't dispatch a
+  // usable keydown for the space bar, so the space just lands in the input's value.
+  // Catch it here too: if the value now ends in a space, treat that as the commit trigger.
+  input.addEventListener('input', () => {
+    if (input.value.endsWith(' ')) {
+      const wordPart = input.value.slice(0, -1);
+      if (!wordPart.trim()) {
+        input.value = ''; // leading space with nothing typed yet — just discard it
+        return;
+      }
+      input.value = wordPart;
+      commitWord();
+    } else {
+      input.classList.remove('wrong');
+    }
+  });
+  document.getElementById('btnTypeHint').addEventListener('click', giveHint);
+  box.addEventListener('click', (e) => { if (e.target === box || e.target === committedSpan) input.focus(); });
+
+  renderCommittedWords();
+  input.focus();
 }
 
-function checkType() {
+function renderTypeSummary() {
   const item = typeItem;
-  const userText = document.getElementById('typeAnswer').value;
-  const refWords = tokenize(item.text);
-  const userWords = tokenize(userText);
-  const { out, pct } = wordDiff(refWords, userWords);
-  const html = out.map(o => o.t==='ok' ? `<span class="ok">${o.w}</span>` : `<span class="miss">${o.w}</span>`).join(' ');
-  const color = pct >= 85 ? 'var(--green)' : pct >= 55 ? 'var(--amber)' : 'var(--red)';
-  document.getElementById('typeResult').innerHTML = `
-    <span class="score-badge" style="background:${color}22;color:${color};">${pct}% match</span>
-    <div class="diff-line" style="margin-top:8px;">${html}</div>
+  const total = typeTargetWords.length;
+  const perfect = typeHintCount === 0;
+  const color = perfect ? 'var(--green)' : typeHintCount <= Math.ceil(total * 0.15) ? 'var(--amber)' : 'var(--red)';
+  const hintedList = Array.from(typeHintedPositions).sort((a,b)=>a-b)
+    .map(i => typeTargetWords[i]).join(', ');
+  app.innerHTML = `
+    <div class="card">
+      <div class="eyebrow">${item.listLabel} · Item ${item.itemNumber} of ${item.listTotal} · Type it out · Results</div>
+      <div style="font-weight:700; margin-bottom:10px;">${item.title}</div>
+      <div style="margin-bottom:10px;">
+        <span class="score-badge" style="background:${color}22;color:${color};">${typeHintCount} hint${typeHintCount===1?'':'s'} used · ${total} words</span>
+      </div>
+      <div class="diff-line">${typeCommitted.join(' ')}</div>
+      ${typeHintedPositions.size ? `<div class="why-tag" style="margin-top:12px;">Needed a hint on: ${hintedList}</div>` : `<div class="why-tag" style="margin-top:12px;">No hints needed — clean run.</div>`}
+      <div class="btnrow" style="margin-top:16px;">
+        <button class="btn ghost" id="btnTypePrev">‹ Prev</button>
+        <button class="btn ghost" id="btnTypeRepeat">Repeat</button>
+        <button class="btn primary" id="btnTypeNext">Next ›</button>
+      </div>
+    </div>
   `;
-  bumpMastery(item.id, pct >= 85);
-  document.getElementById('btnCheckType').disabled = true;
-  const nextBtn = document.createElement('button');
-  nextBtn.className = 'btn primary';
-  nextBtn.textContent = 'Next';
-  nextBtn.style.marginTop = '10px';
-  nextBtn.addEventListener('click', () => { newTypeItem(); renderType(); });
-  document.getElementById('typeResult').appendChild(nextBtn);
+  document.getElementById('btnTypePrev').addEventListener('click', () => { typePrevItem(); renderType(); });
+  document.getElementById('btnTypeRepeat').addEventListener('click', () => { typeRepeatItem(); renderType(); });
+  document.getElementById('btnTypeNext').addEventListener('click', () => { typeNextItem(); renderType(); });
 }
 
 // ----- ORDER TEST -----
