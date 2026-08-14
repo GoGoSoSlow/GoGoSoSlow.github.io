@@ -369,6 +369,11 @@
   .settings-row .settings-row-title { font-weight: 700; font-size: 0.92rem; }
   .settings-row .settings-row-desc { font-size: 0.78rem; color: var(--text-dim2); margin-top: 2px; }
   .settings-row .btn { flex: none; width: auto; padding: 9px 14px; font-size: 0.8rem; }
+  .settings-select {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--line);
+    border-radius: 4px; padding: 8px 10px; font-family: inherit; font-size: 0.85rem;
+    flex: none; width: auto;
+  }
 
   .switch { position: relative; display: inline-block; width: 46px; height: 26px; flex-shrink: 0; }
   .switch input { opacity: 0; width: 0; height: 0; }
@@ -438,13 +443,39 @@
       </div>
       <div class="settings-row">
         <div class="settings-row-text">
+          <div class="settings-row-title">5s mastery speed</div>
+          <div class="settings-row-desc">How many correct reps in a row before a habit's mastery level goes up. Higher = slower, more repetition needed.</div>
+        </div>
+        <select class="settings-select" id="settingsMasterySpeedHabits">
+          <option value="1">1 (fast)</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5 (slow)</option>
+        </select>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-text">
+          <div class="settings-row-title">10s mastery speed</div>
+          <div class="settings-row-desc">Same, but for the 10 Point Commentary. Since there's more to each point, a higher number here can feel more honest than the default.</div>
+        </div>
+        <select class="settings-select" id="settingsMasterySpeedPoints">
+          <option value="1">1 (fast)</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5 (slow)</option>
+        </select>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-text">
           <div class="settings-row-title">Reset progress</div>
           <div class="settings-row-desc">Clears mastery levels for every habit and point. Text size and quiz scope are kept.</div>
         </div>
         <button class="btn miss" id="settingsResetProgress">Reset</button>
       </div>
       <div class="settings-storage-note" id="storageNote"></div>
-      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v13 (Type it out: full habit text, dash auto-fill)</div>
+      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v14 (Mastery speed setting, type-it-out mistake scoring)</div>
     </div>
   </div>
 
@@ -662,12 +693,12 @@ document.getElementById('fcReset').addEventListener('click', () => {
 });
 
 // ---------- STORAGE / MASTERY ----------
-let mastery = {}; // id -> {level: 0-5, seen: n, correct: n}
+let mastery = {}; // id -> {level: 0-5, seen: n, correct: n, streak: n}
 let storageReady = false;
 
 function defaultMastery() {
   const m = {};
-  allItemIds.forEach(id => m[id] = { level: 0, seen: 0, correct: 0 });
+  allItemIds.forEach(id => m[id] = { level: 0, seen: 0, correct: 0, streak: 0 });
   return m;
 }
 
@@ -677,7 +708,9 @@ async function loadMastery() {
     if (val) {
       const parsed = JSON.parse(val);
       mastery = defaultMastery();
-      Object.keys(parsed).forEach(k => { if (mastery[k]) mastery[k] = parsed[k]; });
+      // Merge rather than overwrite, so older saved data missing newer fields (like streak)
+      // doesn't leave them undefined.
+      Object.keys(parsed).forEach(k => { if (mastery[k]) mastery[k] = Object.assign({}, mastery[k], parsed[k]); });
     } else {
       mastery = defaultMastery();
     }
@@ -692,14 +725,48 @@ async function saveMastery() {
   await Store.set('mastery-data', JSON.stringify(mastery));
 }
 
+// How many correct reps in a row are needed before an item's mastery level advances.
+// Configurable separately for the 5s and 10s in Settings — default 1 matches the
+// original (fast) behavior, so nothing changes unless the person turns it up.
+let masterySpeedHabits = 1;
+let masterySpeedPoints = 1;
+const MASTERY_SPEED_MIN = 1, MASTERY_SPEED_MAX = 5;
+
+async function loadMasterySpeed() {
+  try {
+    const h = await Store.get('mastery-speed-habits');
+    const p = await Store.get('mastery-speed-points');
+    const hNum = parseInt(h);
+    const pNum = parseInt(p);
+    if (hNum >= MASTERY_SPEED_MIN && hNum <= MASTERY_SPEED_MAX) masterySpeedHabits = hNum;
+    if (pNum >= MASTERY_SPEED_MIN && pNum <= MASTERY_SPEED_MAX) masterySpeedPoints = pNum;
+  } catch (e) { /* defaults stay */ }
+  const selH = document.getElementById('settingsMasterySpeedHabits');
+  const selP = document.getElementById('settingsMasterySpeedPoints');
+  if (selH) selH.value = String(masterySpeedHabits);
+  if (selP) selP.value = String(masterySpeedPoints);
+}
+
+async function saveMasterySpeed() {
+  await Store.set('mastery-speed-habits', String(masterySpeedHabits));
+  await Store.set('mastery-speed-points', String(masterySpeedPoints));
+}
+
 function bumpMastery(id, correct) {
   const m = mastery[id];
+  if (!m) return;
   m.seen++;
   if (correct) {
     m.correct++;
-    m.level = Math.min(5, m.level + 1);
+    m.streak = (m.streak || 0) + 1;
+    const required = id.startsWith('h') ? masterySpeedHabits : masterySpeedPoints;
+    if (m.streak >= required) {
+      m.level = Math.min(5, m.level + 1);
+      m.streak = 0;
+    }
   } else {
     m.level = Math.max(0, m.level - 2);
+    m.streak = 0;
   }
   saveMastery();
   updateStreakDisplay();
@@ -1097,6 +1164,8 @@ let typeCommitted = [];     // words locked in so far (correct, displayed with r
 let typeCurrentIndex = 0;   // index into typeTargetWords currently being typed
 let typeHintCount = 0;
 let typeHintedPositions = new Set(); // unique word indices that needed a hint
+let typeMistakeCount = 0;
+let typeMistakePositions = new Set(); // unique word indices that were typed wrong at least once
 let typeFinished = false;
 
 function typeSourcePool() {
@@ -1141,6 +1210,8 @@ function applyTypeItem(item) {
   typeCurrentIndex = 0;
   typeHintCount = 0;
   typeHintedPositions = new Set();
+  typeMistakeCount = 0;
+  typeMistakePositions = new Set();
   typeFinished = false;
   autoFillPunctuationWords();
 }
@@ -1184,6 +1255,7 @@ function renderType() {
         <div class="type-hint-box" id="typeHintBox">Hint: <span id="typeHintWord">—</span></div>
         <button class="btn ghost" id="btnTypeHint">Hint (Tab)</button>
         <span class="type-hint-count" id="typeHintCount">Hints: 0</span>
+        <span class="type-hint-count" id="typeMistakeCountEl">Mistakes: 0</span>
       </div>
     </div>
     <div class="helptext">Type each word, then hit space to check it. A wrong word turns red and blocks you — backspace to fix it, or hint it. Tap any word you've already typed to redo it (counts as a hint). Tab or the Hint button reveals the next word.</div>
@@ -1262,7 +1334,7 @@ function renderType() {
   }
 
   function finishItem() {
-    bumpMastery(item.id, typeHintCount === 0);
+    bumpMastery(item.id, typeHintCount === 0 && typeMistakeCount === 0);
     typeFinished = true;
     renderTypeSummary();
   }
@@ -1282,6 +1354,13 @@ function renderType() {
       updateEyebrow();
       if (typeCurrentIndex >= typeTargetWords.length) { finishItem(); return; }
     } else {
+      // Only count a fresh mistake the first time this attempt goes wrong — repeatedly
+      // hitting space on the same unedited wrong entry shouldn't inflate the count.
+      if (!input.classList.contains('wrong')) {
+        typeMistakeCount++;
+        typeMistakePositions.add(typeCurrentIndex);
+        document.getElementById('typeMistakeCountEl').textContent = `Mistakes: ${typeMistakeCount}`;
+      }
       input.classList.add('wrong');
     }
   }
@@ -1321,19 +1400,24 @@ function renderType() {
 function renderTypeSummary() {
   const item = typeItem;
   const total = typeTargetWords.length;
-  const perfect = typeHintCount === 0;
-  const color = perfect ? 'var(--green)' : typeHintCount <= Math.ceil(total * 0.15) ? 'var(--amber)' : 'var(--red)';
+  const issues = typeHintCount + typeMistakeCount;
+  const perfect = issues === 0;
+  const color = perfect ? 'var(--green)' : issues <= Math.ceil(total * 0.15) ? 'var(--amber)' : 'var(--red)';
   const hintedList = Array.from(typeHintedPositions).sort((a,b)=>a-b)
+    .map(i => typeTargetWords[i]).join(', ');
+  const mistakeList = Array.from(typeMistakePositions).sort((a,b)=>a-b)
     .map(i => typeTargetWords[i]).join(', ');
   app.innerHTML = `
     <div class="card">
       <div class="eyebrow">${item.listLabel} · Item ${item.itemNumber} of ${item.listTotal} · Type it out · Results</div>
       <div style="font-weight:700; margin-bottom:10px;">${item.title}</div>
       <div style="margin-bottom:10px;">
-        <span class="score-badge" style="background:${color}22;color:${color};">${typeHintCount} hint${typeHintCount===1?'':'s'} used · ${total} words</span>
+        <span class="score-badge" style="background:${color}22;color:${color};">${typeHintCount} hint${typeHintCount===1?'':'s'} · ${typeMistakeCount} mistake${typeMistakeCount===1?'':'s'} · ${total} words</span>
       </div>
       <div class="diff-line">${typeCommitted.join(' ')}</div>
-      ${typeHintedPositions.size ? `<div class="why-tag" style="margin-top:12px;">Needed a hint on: ${hintedList}</div>` : `<div class="why-tag" style="margin-top:12px;">No hints needed — clean run.</div>`}
+      ${typeHintedPositions.size ? `<div class="why-tag" style="margin-top:12px;">Needed a hint on: ${hintedList}</div>` : ''}
+      ${typeMistakePositions.size ? `<div class="why-tag" style="margin-top:6px;">Typed wrong on: ${mistakeList}</div>` : ''}
+      ${perfect ? `<div class="why-tag" style="margin-top:12px;">No hints, no mistakes — clean run.</div>` : ''}
       <div class="btnrow" style="margin-top:16px;">
         <button class="btn ghost" id="btnTypePrev">‹ Prev</button>
         <button class="btn ghost" id="btnTypeRepeat">Repeat</button>
@@ -1615,9 +1699,17 @@ document.getElementById('settingsHidePrompts').addEventListener('change', (e) =>
   if (currentMode === 'cloze') clozeItem = null; // heading tokens are built at pool time, need a fresh item
   if (['flash','cloze','verbal'].includes(currentMode)) render();
 });
+document.getElementById('settingsMasterySpeedHabits').addEventListener('change', (e) => {
+  masterySpeedHabits = parseInt(e.target.value) || 1;
+  saveMasterySpeed();
+});
+document.getElementById('settingsMasterySpeedPoints').addEventListener('change', (e) => {
+  masterySpeedPoints = parseInt(e.target.value) || 1;
+  saveMasterySpeed();
+});
 
 // ---------- INIT ----------
-Promise.all([loadScope(), loadFontScale(), loadMastery(), loadMode(), loadBlankTitles(), loadHidePrompts()]).then(render);
+Promise.all([loadScope(), loadFontScale(), loadMastery(), loadMode(), loadBlankTitles(), loadHidePrompts(), loadMasterySpeed()]).then(render);
 </script>
 </body>
 </html>
