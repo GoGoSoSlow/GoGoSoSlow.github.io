@@ -197,6 +197,13 @@
   textarea.answer:focus { outline: none; border-color: var(--amber); }
 
   .diff-line { line-height: 1.9; font-size: 0.95rem; margin-top: 4px;}
+  .sum-hint { color: var(--red); font-weight: 700; }
+  .sum-mistake { color: #5b9bd5; font-weight: 700; }
+  .type-legend {
+    font-family: var(--mono); font-size: 0.68rem; color: var(--text-dim2);
+    margin-top: 12px;
+  }
+  .type-legend .sum-hint, .type-legend .sum-mistake { font-weight: 700; }
 
   .type-box {
     background: var(--asphalt); border: 1px solid var(--line); border-radius: 4px;
@@ -475,7 +482,7 @@
         <button class="btn miss" id="settingsResetProgress">Reset</button>
       </div>
       <div class="settings-storage-note" id="storageNote"></div>
-      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v14 (Mastery speed setting, type-it-out mistake scoring)</div>
+      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v15 (Type it out: color-coded results sentence)</div>
     </div>
   </div>
 
@@ -1403,10 +1410,13 @@ function renderTypeSummary() {
   const issues = typeHintCount + typeMistakeCount;
   const perfect = issues === 0;
   const color = perfect ? 'var(--green)' : issues <= Math.ceil(total * 0.15) ? 'var(--amber)' : 'var(--red)';
-  const hintedList = Array.from(typeHintedPositions).sort((a,b)=>a-b)
-    .map(i => typeTargetWords[i]).join(', ');
-  const mistakeList = Array.from(typeMistakePositions).sort((a,b)=>a-b)
-    .map(i => typeTargetWords[i]).join(', ');
+  const sentenceHtml = typeCommitted.map((w, i) => {
+    const hinted = typeHintedPositions.has(i);
+    const missed = typeMistakePositions.has(i);
+    if (hinted) return `<span class="sum-hint">${w}</span>`;
+    if (missed) return `<span class="sum-mistake">${w}</span>`;
+    return w;
+  }).join(' ');
   app.innerHTML = `
     <div class="card">
       <div class="eyebrow">${item.listLabel} · Item ${item.itemNumber} of ${item.listTotal} · Type it out · Results</div>
@@ -1414,10 +1424,8 @@ function renderTypeSummary() {
       <div style="margin-bottom:10px;">
         <span class="score-badge" style="background:${color}22;color:${color};">${typeHintCount} hint${typeHintCount===1?'':'s'} · ${typeMistakeCount} mistake${typeMistakeCount===1?'':'s'} · ${total} words</span>
       </div>
-      <div class="diff-line">${typeCommitted.join(' ')}</div>
-      ${typeHintedPositions.size ? `<div class="why-tag" style="margin-top:12px;">Needed a hint on: ${hintedList}</div>` : ''}
-      ${typeMistakePositions.size ? `<div class="why-tag" style="margin-top:6px;">Typed wrong on: ${mistakeList}</div>` : ''}
-      ${perfect ? `<div class="why-tag" style="margin-top:12px;">No hints, no mistakes — clean run.</div>` : ''}
+      <div class="diff-line">${sentenceHtml}</div>
+      ${!perfect ? `<div class="type-legend"><span class="sum-hint">used a hint</span>&nbsp;&nbsp;<span class="sum-mistake">mistake, no hint</span></div>` : `<div class="why-tag" style="margin-top:12px;">No hints, no mistakes — clean run.</div>`}
       <div class="btnrow" style="margin-top:16px;">
         <button class="btn ghost" id="btnTypePrev">‹ Prev</button>
         <button class="btn ghost" id="btnTypeRepeat">Repeat</button>
