@@ -482,7 +482,7 @@
         <button class="btn miss" id="settingsResetProgress">Reset</button>
       </div>
       <div class="settings-storage-note" id="storageNote"></div>
-      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v15 (Type it out: color-coded results sentence)</div>
+      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v16 (Type it out: only hinted letters colored red)</div>
     </div>
   </div>
 
@@ -810,6 +810,10 @@ function tokenize(str) {
 }
 function normWord(w) {
   return w.toLowerCase().replace(/[.,!?;:"'’“”—–-]+$/,'').replace(/^[.,!?;:"'’“”—–-]+/,'');
+}
+// Same punctuation-stripping as normWord but keeps original case — used for letter-by-letter hints.
+function coreWordChars(w) {
+  return w.replace(/[.,!?;:"'’“”—–-]+$/,'').replace(/^[.,!?;:"'’“”—–-]+/,'');
 }
 // simple LCS-based diff between reference words and user words
 function wordDiff(refWords, userWords) {
@@ -1171,6 +1175,8 @@ let typeCommitted = [];     // words locked in so far (correct, displayed with r
 let typeCurrentIndex = 0;   // index into typeTargetWords currently being typed
 let typeHintCount = 0;
 let typeHintedPositions = new Set(); // unique word indices that needed a hint
+let typeHintLevel = 0;      // progressive reveal level for the word currently being typed: 0/1/2/3(=whole word)
+let typeWordHintLetters = []; // per committed word: how many leading letters were revealed via hint (0 = none)
 let typeMistakeCount = 0;
 let typeMistakePositions = new Set(); // unique word indices that were typed wrong at least once
 let typeFinished = false;
@@ -1217,6 +1223,8 @@ function applyTypeItem(item) {
   typeCurrentIndex = 0;
   typeHintCount = 0;
   typeHintedPositions = new Set();
+  typeHintLevel = 0;
+  typeWordHintLetters = new Array(typeTargetWords.length).fill(0);
   typeMistakeCount = 0;
   typeMistakePositions = new Set();
   typeFinished = false;
@@ -1314,8 +1322,8 @@ function renderType() {
     if (eyebrow) eyebrow.textContent = `${item.listLabel} · Item ${item.itemNumber} of ${item.listTotal} · Type it out · Word ${typeCommitted.length + 1} of ${typeTargetWords.length}`;
   }
 
-  function updateHintUI(revealedWord) {
-    document.getElementById('typeHintWord').textContent = revealedWord || '—';
+  function updateHintUI(revealedText) {
+    document.getElementById('typeHintWord').textContent = revealedText || '—';
     document.getElementById('typeHintCount').textContent = `Hints: ${typeHintCount}`;
   }
 
@@ -1324,6 +1332,8 @@ function renderType() {
     typeCurrentIndex = idx;
     typeHintCount++;
     typeHintedPositions.add(idx);
+    typeWordHintLetters[idx] = typeTargetWords[idx].length; // clicking to fix reveals the whole word
+    typeHintLevel = 3;
     input.value = '';
     input.classList.remove('wrong');
     renderCommittedWords();
@@ -1334,9 +1344,19 @@ function renderType() {
 
   function giveHint() {
     if (typeCurrentIndex >= typeTargetWords.length) return;
+    const target = typeTargetWords[typeCurrentIndex];
+    if (typeHintLevel >= 3) {
+      // Already fully revealed — just re-show it, no new information given, no extra count.
+      updateHintUI(target);
+      input.focus();
+      return;
+    }
+    typeHintLevel++;
     typeHintCount++;
     typeHintedPositions.add(typeCurrentIndex);
-    updateHintUI(typeTargetWords[typeCurrentIndex]);
+    const revealLen = typeHintLevel >= 3 ? target.length : typeHintLevel;
+    const revealText = target.slice(0, revealLen) + (revealLen < target.length ? '…' : '');
+    updateHintUI(revealText);
     input.focus();
   }
 
@@ -1351,8 +1371,10 @@ function renderType() {
     if (!raw.trim()) return; // ignore extra spaces with nothing typed
     const target = typeTargetWords[typeCurrentIndex];
     if (normWord(raw) === normWord(target) && normWord(target).length > 0) {
+      typeWordHintLetters[typeCurrentIndex] = typeHintLevel >= 3 ? target.length : typeHintLevel;
       typeCommitted.push(target);
       typeCurrentIndex++;
+      typeHintLevel = 0; // fresh word, fresh hint progression
       autoFillPunctuationWords();
       input.value = '';
       input.classList.remove('wrong');
@@ -1411,9 +1433,15 @@ function renderTypeSummary() {
   const perfect = issues === 0;
   const color = perfect ? 'var(--green)' : issues <= Math.ceil(total * 0.15) ? 'var(--amber)' : 'var(--red)';
   const sentenceHtml = typeCommitted.map((w, i) => {
-    const hinted = typeHintedPositions.has(i);
+    const hintLetters = typeWordHintLetters[i] || 0;
     const missed = typeMistakePositions.has(i);
-    if (hinted) return `<span class="sum-hint">${w}</span>`;
+    if (hintLetters > 0) {
+      const revealLen = Math.min(hintLetters, w.length);
+      const redPart = w.slice(0, revealLen);
+      const restPart = w.slice(revealLen);
+      const restHtml = restPart ? (missed ? `<span class="sum-mistake">${restPart}</span>` : restPart) : '';
+      return `<span class="sum-hint">${redPart}</span>${restHtml}`;
+    }
     if (missed) return `<span class="sum-mistake">${w}</span>`;
     return w;
   }).join(' ');
@@ -1425,7 +1453,7 @@ function renderTypeSummary() {
         <span class="score-badge" style="background:${color}22;color:${color};">${typeHintCount} hint${typeHintCount===1?'':'s'} · ${typeMistakeCount} mistake${typeMistakeCount===1?'':'s'} · ${total} words</span>
       </div>
       <div class="diff-line">${sentenceHtml}</div>
-      ${!perfect ? `<div class="type-legend"><span class="sum-hint">used a hint</span>&nbsp;&nbsp;<span class="sum-mistake">mistake, no hint</span></div>` : `<div class="why-tag" style="margin-top:12px;">No hints, no mistakes — clean run.</div>`}
+      ${!perfect ? `<div class="type-legend"><span class="sum-hint">hinted letters</span>&nbsp;&nbsp;<span class="sum-mistake">mistake, no hint</span></div>` : `<div class="why-tag" style="margin-top:12px;">No hints, no mistakes — clean run.</div>`}
       <div class="btnrow" style="margin-top:16px;">
         <button class="btn ghost" id="btnTypePrev">‹ Prev</button>
         <button class="btn ghost" id="btnTypeRepeat">Repeat</button>
