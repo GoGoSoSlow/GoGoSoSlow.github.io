@@ -502,7 +502,7 @@
         <button class="btn miss" id="settingsResetProgress">Reset</button>
       </div>
       <div class="settings-storage-note" id="storageNote"></div>
-      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v17 (Type it out: type titles, in-order setting)</div>
+      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v18 (Type it out: now includes Why? for the 10s)</div>
     </div>
   </div>
 
@@ -1249,7 +1249,8 @@ function typeSourcePool() {
     id: p.id, title: p.title,
     chunks: [
       ...(typeIncludeTitles ? [{ label: null, words: tokenize(p.title) }] : []),
-      { label: null, words: tokenize(p.text) }
+      { label: null, words: tokenize(p.text) },
+      { label: hidePrompts ? null : 'Why?', words: tokenize(p.why) }
     ],
     listLabel: '10s', itemNumber: idx + 1, listTotal: tenPoints.length,
     showTitleSeparately: !typeIncludeTitles
