@@ -341,6 +341,11 @@
     font-size: 1.1rem; line-height: 1; flex-shrink: 0; order: 1;
   }
   .settings-btn:active { background: var(--amber-dim); }
+  .settings-btn.active { background: var(--amber); border-color: var(--amber); }
+  .order-mode-label {
+    font-family: var(--mono); font-size: 0.65rem; color: var(--text-dim2);
+    text-align: right; margin: -12px 0 14px;
+  }
 
   .settings-overlay {
     display: none;
@@ -412,6 +417,7 @@
   <header class="top">
     <h1>UPS 5s and 10s</h1>
     <div class="sub" id="streakDisplay">loading…</div>
+    <button class="settings-btn" id="orderModeBtn" aria-label="Toggle item order mode" title="Item order: mastery">🎲</button>
     <button class="settings-btn" id="settingsBtn" aria-label="Settings">⚙</button>
     <div class="font-ctrl">
       <span class="fc-label">Text size</span>
@@ -421,6 +427,7 @@
       <button class="fc-reset" id="fcReset">reset</button>
     </div>
   </header>
+  <div class="order-mode-label" id="orderModeLabel"></div>
 
   <div class="settings-overlay" id="settingsOverlay">
     <div class="settings-panel">
@@ -460,16 +467,6 @@
       </div>
       <div class="settings-row">
         <div class="settings-row-text">
-          <div class="settings-row-title">Type it out in order</div>
-          <div class="settings-row-desc">Go through items in sheet order (1 through 5, or 1 through 10) instead of the usual weighted random pick.</div>
-        </div>
-        <label class="switch">
-          <input type="checkbox" id="settingsTypeInOrder">
-          <span class="switch-track"></span>
-        </label>
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-text">
           <div class="settings-row-title">5s mastery speed</div>
           <div class="settings-row-desc">How many correct reps in a row before a habit's mastery level goes up. Higher = slower, more repetition needed.</div>
         </div>
@@ -502,7 +499,7 @@
         <button class="btn miss" id="settingsResetProgress">Reset</button>
       </div>
       <div class="settings-storage-note" id="storageNote"></div>
-      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v18 (Type it out: now includes Why? for the 10s)</div>
+      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v19 (Global order-mode dice button, Prev/Next everywhere, fixed Why? on results)</div>
     </div>
   </div>
 
@@ -679,21 +676,45 @@ async function saveTypeIncludeTitles() {
   await Store.set('type-include-titles', String(typeIncludeTitles));
 }
 
-// ---------- TYPE-IT-OUT: IN-ORDER SETTING ----------
-let typeInOrder = false;
+// ---------- ITEM ORDER MODE (global, applies to Flashcards / Fill-in / Type it out) ----------
+// 'mastery' = weighted random favoring weaker items (default, spaced-repetition style)
+// 'sequential' = strict sheet order, 1 through 5 / 1 through 10
+let itemOrderMode = 'mastery';
 
-async function loadTypeInOrder() {
+function updateOrderModeButton() {
+  const btn = document.getElementById('orderModeBtn');
+  const label = document.getElementById('orderModeLabel');
+  if (btn) {
+    btn.title = `Item order: ${itemOrderMode}`;
+    btn.classList.toggle('active', itemOrderMode === 'sequential');
+  }
+  if (label) {
+    label.textContent = itemOrderMode === 'sequential' ? 'Order: in order (1, 2, 3…)' : 'Order: mastery (weighted random)';
+  }
+}
+
+async function loadItemOrderMode() {
   try {
-    const val = await Store.get('type-in-order');
-    typeInOrder = val === 'true';
-  } catch (e) { typeInOrder = false; }
-  const toggle = document.getElementById('settingsTypeInOrder');
-  if (toggle) toggle.checked = typeInOrder;
+    const val = await Store.get('item-order-mode');
+    if (val === 'sequential' || val === 'mastery') itemOrderMode = val;
+  } catch (e) { /* default stays */ }
+  updateOrderModeButton();
 }
 
-async function saveTypeInOrder() {
-  await Store.set('type-in-order', String(typeInOrder));
+async function saveItemOrderMode() {
+  await Store.set('item-order-mode', itemOrderMode);
 }
+
+document.getElementById('orderModeBtn').addEventListener('click', () => {
+  itemOrderMode = itemOrderMode === 'sequential' ? 'mastery' : 'sequential';
+  updateOrderModeButton();
+  saveItemOrderMode();
+  // force each mode to pick a fresh item under the new mode next time it's shown
+  flashItem = null;
+  clozeItem = null;
+  typeItem = null;
+  render();
+});
 
 document.querySelectorAll('.scope-toggle button').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -939,12 +960,31 @@ function render() {
 // ----- FLASHCARDS -----
 let flashItem = null;
 let flashFlipped = false;
+let flashPoolIndex = -1;
+
+function flashSourcePool() { return [...scopedHabits(), ...scopedPoints()]; }
 
 function newFlashItem() {
-  const pool = [...scopedHabits(), ...scopedPoints()];
+  if (itemOrderMode === 'sequential') { flashGoTo(flashPoolIndex + 1); return; }
+  const pool = flashSourcePool();
+  if (!pool.length) return;
   flashItem = pickWeighted(pool);
+  flashPoolIndex = pool.findIndex(p => p.id === flashItem.id);
   flashFlipped = false;
 }
+
+function flashGoTo(targetIndex) {
+  const pool = flashSourcePool();
+  if (!pool.length) return;
+  let idx = targetIndex;
+  if (idx < 0) idx = pool.length - 1;
+  if (idx >= pool.length) idx = 0;
+  flashPoolIndex = idx;
+  flashItem = pool[idx];
+  flashFlipped = false;
+}
+function flashNext() { flashGoTo(flashPoolIndex + 1); }
+function flashPrev() { flashGoTo(flashPoolIndex - 1); }
 
 function renderFlash() {
   if (!flashItem) newFlashItem();
@@ -978,6 +1018,10 @@ function renderFlash() {
         <button class="btn miss" id="btnMiss" ${!flashFlipped?'disabled':''}>Missed it</button>
         <button class="btn got" id="btnGot" ${!flashFlipped?'disabled':''}>Got it</button>
       </div>
+      <div class="cloze-nav" style="margin-top:10px; margin-bottom:0;">
+        <button class="btn ghost" id="btnFlashPrev">‹ Prev</button>
+        <button class="btn ghost" id="btnFlashNext">Next ›</button>
+      </div>
     </div>
     <div class="helptext">Cards you miss come back more often. Cards you nail five times in a row stop showing up as much — that's mastery.</div>
   `;
@@ -993,6 +1037,8 @@ function renderFlash() {
   const btnMiss = document.getElementById('btnMiss');
   if (btnGot) btnGot.addEventListener('click', () => { bumpMastery(item.id, true); newFlashItem(); renderFlash(); });
   if (btnMiss) btnMiss.addEventListener('click', () => { bumpMastery(item.id, false); newFlashItem(); renderFlash(); });
+  document.getElementById('btnFlashPrev').addEventListener('click', () => { flashPrev(); renderFlash(); });
+  document.getElementById('btnFlashNext').addEventListener('click', () => { flashNext(); renderFlash(); });
 }
 
 // ----- CLOZE (fill-in-the-blank) -----
@@ -1075,6 +1121,7 @@ function applyClozeItem(item) {
 }
 
 function newCloze() {
+  if (itemOrderMode === 'sequential') { clozeGoTo(clozePoolIndex + 1); return; }
   const pool = clozeSourcePool();
   const item = pickWeighted(pool);
   clozePoolIndex = pool.findIndex(p => p.id === item.id);
@@ -1291,9 +1338,10 @@ function applyTypeItem(item) {
 }
 
 function newTypeItem() {
+  if (itemOrderMode === 'sequential') { typeGoTo(typePoolIndex + 1); return; }
   const pool = typeSourcePool();
   if (!pool.length) return;
-  const item = typeInOrder ? pool[0] : pickWeighted(pool);
+  const item = pickWeighted(pool);
   typePoolIndex = pool.findIndex(p => p.id === item.id);
   applyTypeItem(item);
 }
@@ -1492,7 +1540,8 @@ function renderTypeSummary() {
   const issues = typeHintCount + typeMistakeCount;
   const perfect = issues === 0;
   const color = perfect ? 'var(--green)' : issues <= Math.ceil(total * 0.15) ? 'var(--amber)' : 'var(--red)';
-  const sentenceHtml = typeCommitted.map((w, i) => {
+  function coloredWord(i) {
+    const w = typeCommitted[i];
     const hintLetters = typeWordHintLetters[i] || 0;
     const missed = typeMistakePositions.has(i);
     if (hintLetters > 0) {
@@ -1504,7 +1553,17 @@ function renderTypeSummary() {
     }
     if (missed) return `<span class="sum-mistake">${w}</span>`;
     return w;
-  }).join(' ');
+  }
+  // Walk chunk-by-chunk (same structure as the live typing view) so headings like
+  // "How do you do it?" / "Key Phrase" / "Why?" still show up here, not just while typing.
+  let sentenceHtml = '';
+  typeChunkBounds.forEach((bounds, c) => {
+    if (c > 0) sentenceHtml += '<div class="cloze-divider"></div>';
+    if (bounds.label) sentenceHtml += `<span class="cloze-heading">${bounds.label}</span> `;
+    const wordsHtml = [];
+    for (let i = bounds.start; i < bounds.end; i++) wordsHtml.push(coloredWord(i));
+    sentenceHtml += wordsHtml.join(' ');
+  });
   app.innerHTML = `
     <div class="card">
       <div class="eyebrow">${item.listLabel} · Item ${item.itemNumber} of ${item.listTotal} · Type it out · Results</div>
@@ -1647,6 +1706,38 @@ function startVerbalSession() {
   verbalAwaitingNext = false;
 }
 
+// Jump to the first step of the next/previous item (habit or point), skipping past
+// however many sentences that item has — lets Prev/Next move item-by-item like the
+// other modes, even though verbal steps are broken down sentence-by-sentence.
+function verbalItemStartIndex(fromIndex) {
+  const id = verbalSteps[fromIndex].itemId;
+  let i = fromIndex;
+  while (i > 0 && verbalSteps[i - 1].itemId === id) i--;
+  return i;
+}
+function verbalNextItem() {
+  if (!verbalSteps.length) return;
+  const curId = verbalSteps[Math.min(verbalIndex, verbalSteps.length - 1)].itemId;
+  let idx = verbalSteps.findIndex((s, i) => i > verbalIndex && s.itemId !== curId);
+  if (idx === -1) idx = 0; // wrap to the very first item
+  verbalIndex = idx;
+  verbalAwaitingNext = false;
+  verbalFinished = false;
+  renderVerbal();
+}
+function verbalPrevItem() {
+  if (!verbalSteps.length) return;
+  const curStart = verbalItemStartIndex(Math.min(verbalIndex, verbalSteps.length - 1));
+  if (curStart === 0) {
+    verbalIndex = verbalItemStartIndex(verbalSteps.length - 1); // wrap to last item's start
+  } else {
+    verbalIndex = verbalItemStartIndex(curStart - 1);
+  }
+  verbalAwaitingNext = false;
+  verbalFinished = false;
+  renderVerbal();
+}
+
 function renderVerbal() {
   if (!verbalSteps.length) startVerbalSession();
   if (verbalFinished) { renderVerbalSummary(); return; }
@@ -1666,8 +1757,12 @@ function renderVerbal() {
       ${labelHtml}
       <div class="flash-title" style="text-align:left; font-size:1.15rem; line-height:1.4;">${step.text}</div>
       ${buttonsHtml}
+      <div class="cloze-nav" style="margin-top:14px; margin-bottom:0;">
+        <button class="btn ghost" id="btnVerbalPrev">‹ Prev item</button>
+        <button class="btn ghost" id="btnVerbalNext">Next item ›</button>
+      </div>
     </div>
-    <div class="helptext">Say it out loud, then mark whether you got it right. You'll see everything you missed at the end.</div>
+    <div class="helptext">Say it out loud, then mark whether you got it right. You'll see everything you missed at the end. Prev/Next item jumps to the start of the previous or next habit/point.</div>
   `;
   const cardEl = document.getElementById('verbalCard');
   if (cardEl) cardEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1677,6 +1772,8 @@ function renderVerbal() {
   if (missBtn) missBtn.addEventListener('click', () => recordVerbal(false));
   if (gotBtn) gotBtn.addEventListener('click', () => recordVerbal(true));
   if (nextBtn) nextBtn.addEventListener('click', advanceVerbal);
+  document.getElementById('btnVerbalPrev').addEventListener('click', verbalPrevItem);
+  document.getElementById('btnVerbalNext').addEventListener('click', verbalNextItem);
 }
 
 function recordVerbal(correct) {
@@ -1808,13 +1905,9 @@ document.getElementById('settingsTypeTitles').addEventListener('change', (e) => 
   saveTypeIncludeTitles();
   if (currentMode === 'type') { typeItem = null; render(); } // pool structure changed, need a fresh item
 });
-document.getElementById('settingsTypeInOrder').addEventListener('change', (e) => {
-  typeInOrder = e.target.checked;
-  saveTypeInOrder();
-});
 
 // ---------- INIT ----------
-Promise.all([loadScope(), loadFontScale(), loadMastery(), loadMode(), loadBlankTitles(), loadHidePrompts(), loadMasterySpeed(), loadTypeIncludeTitles(), loadTypeInOrder()]).then(render);
+Promise.all([loadScope(), loadFontScale(), loadMastery(), loadMode(), loadBlankTitles(), loadHidePrompts(), loadMasterySpeed(), loadTypeIncludeTitles(), loadItemOrderMode()]).then(render);
 </script>
 </body>
 </html>
