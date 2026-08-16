@@ -450,6 +450,26 @@
       </div>
       <div class="settings-row">
         <div class="settings-row-text">
+          <div class="settings-row-title">Type the titles too</div>
+          <div class="settings-row-desc">In Type it out, also require typing the habit/point name (e.g. "Clearing Intersections"), not just the body text.</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="settingsTypeTitles">
+          <span class="switch-track"></span>
+        </label>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-text">
+          <div class="settings-row-title">Type it out in order</div>
+          <div class="settings-row-desc">Go through items in sheet order (1 through 5, or 1 through 10) instead of the usual weighted random pick.</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="settingsTypeInOrder">
+          <span class="switch-track"></span>
+        </label>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-text">
           <div class="settings-row-title">5s mastery speed</div>
           <div class="settings-row-desc">How many correct reps in a row before a habit's mastery level goes up. Higher = slower, more repetition needed.</div>
         </div>
@@ -482,7 +502,7 @@
         <button class="btn miss" id="settingsResetProgress">Reset</button>
       </div>
       <div class="settings-storage-note" id="storageNote"></div>
-      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v16 (Type it out: only hinted letters colored red)</div>
+      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v17 (Type it out: type titles, in-order setting)</div>
     </div>
   </div>
 
@@ -641,6 +661,38 @@ async function loadHidePrompts() {
 
 async function saveHidePrompts() {
   await Store.set('hide-prompts', String(hidePrompts));
+}
+
+// ---------- TYPE-IT-OUT: INCLUDE TITLES SETTING ----------
+let typeIncludeTitles = false;
+
+async function loadTypeIncludeTitles() {
+  try {
+    const val = await Store.get('type-include-titles');
+    typeIncludeTitles = val === 'true';
+  } catch (e) { typeIncludeTitles = false; }
+  const toggle = document.getElementById('settingsTypeTitles');
+  if (toggle) toggle.checked = typeIncludeTitles;
+}
+
+async function saveTypeIncludeTitles() {
+  await Store.set('type-include-titles', String(typeIncludeTitles));
+}
+
+// ---------- TYPE-IT-OUT: IN-ORDER SETTING ----------
+let typeInOrder = false;
+
+async function loadTypeInOrder() {
+  try {
+    const val = await Store.get('type-in-order');
+    typeInOrder = val === 'true';
+  } catch (e) { typeInOrder = false; }
+  const toggle = document.getElementById('settingsTypeInOrder');
+  if (toggle) toggle.checked = typeInOrder;
+}
+
+async function saveTypeInOrder() {
+  await Store.set('type-in-order', String(typeInOrder));
 }
 
 document.querySelectorAll('.scope-toggle button').forEach(btn => {
@@ -1185,16 +1237,22 @@ function typeSourcePool() {
   const habitItems = scopedHabits().map((h, idx) => ({
     id: h.id, title: h.name,
     chunks: [
+      ...(typeIncludeTitles ? [{ label: null, words: tokenize(h.name) }] : []),
       { label: hidePrompts ? null : 'How do you do it?', words: tokenize(h.how) },
       { label: hidePrompts ? null : 'What does it do for you?', words: tokenize(h.what) },
       { label: hidePrompts ? null : 'Key Phrase', words: tokenize(`Remember, "${h.key}"`) },
     ],
-    listLabel: '5s', itemNumber: idx + 1, listTotal: fiveHabits.length
+    listLabel: '5s', itemNumber: idx + 1, listTotal: fiveHabits.length,
+    showTitleSeparately: !typeIncludeTitles
   }));
   const pointItems = scopedPoints().map((p, idx) => ({
     id: p.id, title: p.title,
-    chunks: [ { label: null, words: tokenize(p.text) } ],
-    listLabel: '10s', itemNumber: idx + 1, listTotal: tenPoints.length
+    chunks: [
+      ...(typeIncludeTitles ? [{ label: null, words: tokenize(p.title) }] : []),
+      { label: null, words: tokenize(p.text) }
+    ],
+    listLabel: '10s', itemNumber: idx + 1, listTotal: tenPoints.length,
+    showTitleSeparately: !typeIncludeTitles
   }));
   return [...habitItems, ...pointItems];
 }
@@ -1233,7 +1291,8 @@ function applyTypeItem(item) {
 
 function newTypeItem() {
   const pool = typeSourcePool();
-  const item = pickWeighted(pool);
+  if (!pool.length) return;
+  const item = typeInOrder ? pool[0] : pickWeighted(pool);
   typePoolIndex = pool.findIndex(p => p.id === item.id);
   applyTypeItem(item);
 }
@@ -1264,7 +1323,7 @@ function renderType() {
   app.innerHTML = `
     <div class="card" id="typeCard">
       <div class="eyebrow">${item.listLabel} · Item ${item.itemNumber} of ${item.listTotal} · Type it out · Word ${typeCommitted.length + 1} of ${typeTargetWords.length}</div>
-      <div style="font-weight:700; margin-bottom:10px;">${item.title}</div>
+      ${item.showTitleSeparately ? `<div style="font-weight:700; margin-bottom:10px;">${item.title}</div>` : ''}
       <div class="type-box" id="typeBox"><span id="typeCommittedWords"></span><input id="typeInput" class="type-input" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false"></div>
       <div class="type-hint-row">
         <div class="type-hint-box" id="typeHintBox">Hint: <span id="typeHintWord">—</span></div>
@@ -1448,7 +1507,7 @@ function renderTypeSummary() {
   app.innerHTML = `
     <div class="card">
       <div class="eyebrow">${item.listLabel} · Item ${item.itemNumber} of ${item.listTotal} · Type it out · Results</div>
-      <div style="font-weight:700; margin-bottom:10px;">${item.title}</div>
+      ${item.showTitleSeparately ? `<div style="font-weight:700; margin-bottom:10px;">${item.title}</div>` : ''}
       <div style="margin-bottom:10px;">
         <span class="score-badge" style="background:${color}22;color:${color};">${typeHintCount} hint${typeHintCount===1?'':'s'} · ${typeMistakeCount} mistake${typeMistakeCount===1?'':'s'} · ${total} words</span>
       </div>
@@ -1743,9 +1802,18 @@ document.getElementById('settingsMasterySpeedPoints').addEventListener('change',
   masterySpeedPoints = parseInt(e.target.value) || 1;
   saveMasterySpeed();
 });
+document.getElementById('settingsTypeTitles').addEventListener('change', (e) => {
+  typeIncludeTitles = e.target.checked;
+  saveTypeIncludeTitles();
+  if (currentMode === 'type') { typeItem = null; render(); } // pool structure changed, need a fresh item
+});
+document.getElementById('settingsTypeInOrder').addEventListener('change', (e) => {
+  typeInOrder = e.target.checked;
+  saveTypeInOrder();
+});
 
 // ---------- INIT ----------
-Promise.all([loadScope(), loadFontScale(), loadMastery(), loadMode(), loadBlankTitles(), loadHidePrompts(), loadMasterySpeed()]).then(render);
+Promise.all([loadScope(), loadFontScale(), loadMastery(), loadMode(), loadBlankTitles(), loadHidePrompts(), loadMasterySpeed(), loadTypeIncludeTitles(), loadTypeInOrder()]).then(render);
 </script>
 </body>
 </html>
