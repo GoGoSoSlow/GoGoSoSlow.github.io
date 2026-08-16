@@ -457,6 +457,16 @@
       </div>
       <div class="settings-row">
         <div class="settings-row-text">
+          <div class="settings-row-title">Split long sentences</div>
+          <div class="settings-row-desc">In Verbal Practice, breaks a handful of the 10 Point Commentary's longer sentences into two shorter chunks at a natural pause, so they're easier to memorize and link together.</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="settingsSplitSentences">
+          <span class="switch-track"></span>
+        </label>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-text">
           <div class="settings-row-title">Type the titles too</div>
           <div class="settings-row-desc">In Type it out, also require typing the habit/point name (e.g. "Clearing Intersections"), not just the body text.</div>
         </div>
@@ -499,7 +509,7 @@
         <button class="btn miss" id="settingsResetProgress">Reset</button>
       </div>
       <div class="settings-storage-note" id="storageNote"></div>
-      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v20 (Type it out: Prev/Next visible while typing, not just at results)</div>
+      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v21 (Verbal Practice: split long sentences setting)</div>
     </div>
   </div>
 
@@ -573,6 +583,43 @@ const tenPoints = [
 ];
 
 const allItemIds = [...fiveHabits.map(h=>h.id), ...tenPoints.map(p=>p.id)];
+
+// Manual break points for Verbal Practice's "Split long sentences" setting. Auto-splitting on
+// punctuation alone doesn't catch these — they're long single sentences with a natural seam
+// (usually a comma joining two complete thoughts) that's easier to memorize as two chunks.
+// Keys must match splitSentences() output for that point's text exactly (trimmed).
+const VERBAL_SENTENCE_SPLITS = {
+  p0: {
+    "Scan your driving scene getting the big picture and look left, right, first, looking for any pedestrians, bicycles, motorcycles, and vehicles to ensure they are obeying their traffic sign or signal, and looking for any obstructions that may block your visibility.":
+      ["Scan your driving scene getting the big picture and look left, right, first, looking for any pedestrians, bicycles, motorcycles, and vehicles to ensure they are obeying their traffic sign or signal,",
+       "and looking for any obstructions that may block your visibility."]
+  },
+  p3: {
+    "To calculate following distance- When the vehicle ahead passes a stationary item, start counting 1/1000 one, 1/1000 two, 1/1000 three until the front bumper of my vehicle reaches that item.":
+      ["To calculate following distance- When the vehicle ahead passes a stationary item,",
+       "start counting 1/1000 one, 1/1000 two, 1/1000 three until the front bumper of my vehicle reaches that item."]
+  },
+  p4: {
+    "To establish eye lead time while driving, I pick a stationary item in front of my vehicle and start counting 1/1000 one, 1/1000 two, 1/1000 three until the front of my vehicle reaches that item.":
+      ["To establish eye lead time while driving, I pick a stationary item in front of my vehicle",
+       "and start counting 1/1000 one, 1/1000 two, 1/1000 three until the front of my vehicle reaches that item."]
+  },
+  p5: {
+    "Other ways to see if the vehicle is occupied is steering wheels turned out, tail or brake lights on, and exhaust coming from the tail pipe.":
+      ["Other ways to see if the vehicle is occupied is steering wheels turned out,",
+       "tail or brake lights on, and exhaust coming from the tail pipe."]
+  },
+  p6: {
+    "A stale green light is a light that I did not see change, and I'm not sure when it may turn to yellow or red.":
+      ["A stale green light is a light that I did not see change,",
+       "and I'm not sure when it may turn to yellow or red."]
+  },
+  p8: {
+    "I look over my traffic side shoulder to check my blind spot between the fuel tank and drive axle in the lane I'm about to occupy.":
+      ["I look over my traffic side shoulder to check my blind spot",
+       "between the fuel tank and drive axle in the lane I'm about to occupy."]
+  }
+};
 
 // ---------- STORAGE ADAPTER ----------
 // Uses window.storage when running inside Claude's artifact viewer.
@@ -658,6 +705,22 @@ async function loadHidePrompts() {
 
 async function saveHidePrompts() {
   await Store.set('hide-prompts', String(hidePrompts));
+}
+
+// ---------- VERBAL PRACTICE: SPLIT LONG SENTENCES SETTING ----------
+let splitLongSentences = true;
+
+async function loadSplitLongSentences() {
+  try {
+    const val = await Store.get('split-long-sentences');
+    if (val !== null) splitLongSentences = val === 'true';
+  } catch (e) { /* default stays */ }
+  const toggle = document.getElementById('settingsSplitSentences');
+  if (toggle) toggle.checked = splitLongSentences;
+}
+
+async function saveSplitLongSentences() {
+  await Store.set('split-long-sentences', String(splitLongSentences));
 }
 
 // ---------- TYPE-IT-OUT: INCLUDE TITLES SETTING ----------
@@ -1693,8 +1756,10 @@ function buildVerbalSteps(scope) {
       const itemNumber = idx + 1, listTotal = tenPoints.length;
       const base = { itemId: p.id, itemTitle: p.title, listLabel: '10s', itemNumber, listTotal };
       steps.push({ ...base, label: null, text: p.title, part: 'title' });
+      const overrides = splitLongSentences ? VERBAL_SENTENCE_SPLITS[p.id] : null;
       splitSentences(p.text).forEach(sentence => {
-        steps.push({ ...base, label: null, text: sentence, part: 'body' });
+        const parts = (overrides && overrides[sentence]) ? overrides[sentence] : [sentence];
+        parts.forEach(part => steps.push({ ...base, label: null, text: part, part: 'body' }));
       });
       steps.push({ ...base, label: 'Why?', text: p.why, part: 'why' });
     });
@@ -1911,9 +1976,14 @@ document.getElementById('settingsTypeTitles').addEventListener('change', (e) => 
   saveTypeIncludeTitles();
   if (currentMode === 'type') { typeItem = null; render(); } // pool structure changed, need a fresh item
 });
+document.getElementById('settingsSplitSentences').addEventListener('change', (e) => {
+  splitLongSentences = e.target.checked;
+  saveSplitLongSentences();
+  if (currentMode === 'verbal') { verbalSteps = []; render(); } // step list changes length, need a fresh session
+});
 
 // ---------- INIT ----------
-Promise.all([loadScope(), loadFontScale(), loadMastery(), loadMode(), loadBlankTitles(), loadHidePrompts(), loadMasterySpeed(), loadTypeIncludeTitles(), loadItemOrderMode()]).then(render);
+Promise.all([loadScope(), loadFontScale(), loadMastery(), loadMode(), loadBlankTitles(), loadHidePrompts(), loadMasterySpeed(), loadTypeIncludeTitles(), loadItemOrderMode(), loadSplitLongSentences()]).then(render);
 </script>
 </body>
 </html>
