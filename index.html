@@ -499,7 +499,7 @@
         <button class="btn miss" id="settingsResetProgress">Reset</button>
       </div>
       <div class="settings-storage-note" id="storageNote"></div>
-      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v19 (Global order-mode dice button, Prev/Next everywhere, fixed Why? on results)</div>
+      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v20 (Type it out: Prev/Next visible while typing, not just at results)</div>
     </div>
   </div>
 
@@ -1380,8 +1380,12 @@ function renderType() {
         <span class="type-hint-count" id="typeHintCount">Hints: 0</span>
         <span class="type-hint-count" id="typeMistakeCountEl">Mistakes: 0</span>
       </div>
+      <div class="cloze-nav" style="margin-top:14px; margin-bottom:0;">
+        <button class="btn ghost" id="btnTypePrevLive">‹ Prev</button>
+        <button class="btn ghost" id="btnTypeNextLive">Next ›</button>
+      </div>
     </div>
-    <div class="helptext">Type each word, then hit space to check it. A wrong word turns red and blocks you — backspace to fix it, or hint it. Tap any word you've already typed to redo it (counts as a hint). Tab or the Hint button reveals the next word.</div>
+    <div class="helptext">Type each word, then hit space to check it. A wrong word turns red and blocks you — backspace to fix it, or hint it. Tap any word you've already typed to redo it (counts as a hint). Tab or the Hint button reveals the next word. Prev/Next jumps straight to that item, abandoning anything not yet checked on this one.</div>
   `;
   const box = document.getElementById('typeBox');
   const input = document.getElementById('typeInput');
@@ -1529,6 +1533,8 @@ function renderType() {
   });
   document.getElementById('btnTypeHint').addEventListener('click', giveHint);
   box.addEventListener('click', (e) => { if (e.target === box || e.target === committedSpan) input.focus(); });
+  document.getElementById('btnTypePrevLive').addEventListener('click', () => { typePrevItem(); renderType(); });
+  document.getElementById('btnTypeNextLive').addEventListener('click', () => { typeNextItem(); renderType(); });
 
   renderCommittedWords();
   input.focus();
