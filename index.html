@@ -509,7 +509,7 @@
         <button class="btn miss" id="settingsResetProgress">Reset</button>
       </div>
       <div class="settings-storage-note" id="storageNote"></div>
-      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v23 (Quick Recall: tap title to reveal body text)</div>
+      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v24 (New mode: Quick Type — titles + tagline, typed with hints/mistakes)</div>
     </div>
   </div>
 
@@ -517,6 +517,7 @@
     <button data-mode="flash" class="active">Flashcards</button>
     <button data-mode="cloze">Fill-in</button>
     <button data-mode="type">Type it out</button>
+    <button data-mode="qtype">Quick Type</button>
     <button data-mode="order">Quick Recall</button>
     <button data-mode="verbal">Verbal Practice</button>
     <button data-mode="progress">Progress</button>
@@ -776,6 +777,7 @@ document.getElementById('orderModeBtn').addEventListener('click', () => {
   flashItem = null;
   clozeItem = null;
   typeItem = null;
+  qtItem = null;
   render();
 });
 
@@ -789,6 +791,7 @@ document.querySelectorAll('.scope-toggle button').forEach(btn => {
     flashItem = null;
     clozeItem = null;
     typeItem = null;
+    qtItem = null;
     recallSteps = [];
     verbalSteps = [];
     render();
@@ -988,7 +991,7 @@ let currentMode = 'flash';
 async function loadMode() {
   try {
     const val = await Store.get('quiz-mode');
-    const valid = ['flash','cloze','type','order','verbal','progress'];
+    const valid = ['flash','cloze','type','qtype','order','verbal','progress'];
     if (val && valid.includes(val)) currentMode = val;
   } catch (e) { /* default stays */ }
   document.querySelectorAll('nav.modes button').forEach(b => {
@@ -1015,6 +1018,7 @@ function render() {
   if (currentMode === 'flash') renderFlash();
   else if (currentMode === 'cloze') renderCloze();
   else if (currentMode === 'type') renderType();
+  else if (currentMode === 'qtype') renderQt();
   else if (currentMode === 'order') renderRecall();
   else if (currentMode === 'verbal') renderVerbal();
   else if (currentMode === 'progress') renderProgress();
@@ -1654,6 +1658,314 @@ function renderTypeSummary() {
   document.getElementById('btnTypeNext').addEventListener('click', () => { typeNextItem(); renderType(); });
 }
 
+// ----- QUICK TYPE (title + tagline, typed) -----
+let qtItem = null;
+let qtPoolIndex = -1;
+let qtTargetWords = [];
+let qtChunkBounds = [];
+let qtCommitted = [];
+let qtCurrentIndex = 0;
+let qtHintCount = 0;
+let qtHintedPositions = new Set();
+let qtHintLevel = 0;
+let qtWordHintLetters = [];
+let qtMistakeCount = 0;
+let qtMistakePositions = new Set();
+let qtFinished = false;
+
+function qtSourcePool() {
+  const habitItems = scopedHabits().map((h, idx) => ({
+    id: h.id, title: h.name,
+    chunks: [
+      { label: null, words: tokenize(h.name) },
+      { label: hidePrompts ? null : 'Key Phrase', words: tokenize(`Remember, "${h.key}"`) },
+    ],
+    listLabel: '5s', itemNumber: idx + 1, listTotal: fiveHabits.length,
+    showTitleSeparately: false
+  }));
+  const pointItems = scopedPoints().map((p, idx) => ({
+    id: p.id, title: p.title,
+    chunks: [
+      { label: null, words: tokenize(p.title) },
+      { label: hidePrompts ? null : 'Why?', words: tokenize(p.why) }
+    ],
+    listLabel: '10s', itemNumber: idx + 1, listTotal: tenPoints.length,
+    showTitleSeparately: false
+  }));
+  return [...habitItems, ...pointItems];
+}
+
+function autoFillQtPunctuationWords() {
+  while (qtCurrentIndex < qtTargetWords.length && normWord(qtTargetWords[qtCurrentIndex]).length === 0) {
+    qtCommitted.push(qtTargetWords[qtCurrentIndex]);
+    qtCurrentIndex++;
+  }
+}
+
+function applyQtItem(item) {
+  qtItem = item;
+  qtTargetWords = [];
+  qtChunkBounds = [];
+  let pos = 0;
+  item.chunks.forEach(chunk => {
+    const start = pos;
+    qtTargetWords.push(...chunk.words);
+    pos += chunk.words.length;
+    qtChunkBounds.push({ start, end: pos, label: chunk.label });
+  });
+  qtCommitted = [];
+  qtCurrentIndex = 0;
+  qtHintCount = 0;
+  qtHintedPositions = new Set();
+  qtHintLevel = 0;
+  qtWordHintLetters = new Array(qtTargetWords.length).fill(0);
+  qtMistakeCount = 0;
+  qtMistakePositions = new Set();
+  qtFinished = false;
+  autoFillQtPunctuationWords();
+}
+
+function newQtItem() {
+  if (itemOrderMode === 'sequential') { qtGoTo(qtPoolIndex + 1); return; }
+  const pool = qtSourcePool();
+  if (!pool.length) return;
+  const item = pickWeighted(pool);
+  qtPoolIndex = pool.findIndex(p => p.id === item.id);
+  applyQtItem(item);
+}
+
+function qtGoTo(targetIndex) {
+  const pool = qtSourcePool();
+  if (!pool.length) return;
+  let idx = targetIndex;
+  if (idx < 0) idx = pool.length - 1;
+  if (idx >= pool.length) idx = 0;
+  qtPoolIndex = idx;
+  applyQtItem(pool[idx]);
+}
+function qtNextItem() { qtGoTo(qtPoolIndex + 1); }
+function qtPrevItem() { qtGoTo(qtPoolIndex - 1); }
+function qtRepeatItem() {
+  const pool = qtSourcePool();
+  const idx = pool.findIndex(p => p.id === qtItem.id);
+  if (idx === -1) { newQtItem(); return; }
+  qtPoolIndex = idx;
+  applyQtItem(pool[idx]);
+}
+
+function renderQt() {
+  if (!qtItem) newQtItem();
+  if (qtFinished) { renderQtSummary(); return; }
+  const item = qtItem;
+  app.innerHTML = `
+    <div class="card" id="qtCard">
+      <div class="eyebrow">${item.listLabel} · Item ${item.itemNumber} of ${item.listTotal} · Quick Type · Word ${qtCommitted.length + 1} of ${qtTargetWords.length}</div>
+      <div class="type-box" id="qtBox"><span id="qtCommittedWords"></span><input id="qtInput" class="type-input" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false"></div>
+      <div class="type-hint-row">
+        <div class="type-hint-box" id="qtHintBox">Hint: <span id="qtHintWord">—</span></div>
+        <button class="btn ghost" id="btnQtHint">Hint (Tab)</button>
+        <span class="type-hint-count" id="qtHintCountEl">Hints: 0</span>
+        <span class="type-hint-count" id="qtMistakeCountEl">Mistakes: 0</span>
+      </div>
+      <div class="cloze-nav" style="margin-top:14px; margin-bottom:0;">
+        <button class="btn ghost" id="btnQtPrevLive">‹ Prev</button>
+        <button class="btn ghost" id="btnQtNextLive">Next ›</button>
+      </div>
+    </div>
+    <div class="helptext">Just the title and its tagline (Key Phrase / Why?) — a fast typing pass to lock in the short version. Space checks each word, wrong words block in red, Tab or Hint reveals a letter at a time.</div>
+  `;
+  const box = document.getElementById('qtBox');
+  const input = document.getElementById('qtInput');
+  const committedSpan = document.getElementById('qtCommittedWords');
+
+  function scrollBoxToBottom() { box.scrollTop = box.scrollHeight; }
+
+  function chunkIndexForWord(wordIdx) {
+    for (let c = 0; c < qtChunkBounds.length; c++) {
+      if (wordIdx >= qtChunkBounds[c].start && wordIdx < qtChunkBounds[c].end) return c;
+    }
+    return qtChunkBounds.length - 1;
+  }
+
+  function renderCommittedWords() {
+    const upToChunk = chunkIndexForWord(Math.min(qtCurrentIndex, qtTargetWords.length - 1));
+    let html = '';
+    for (let c = 0; c <= upToChunk; c++) {
+      const bounds = qtChunkBounds[c];
+      if (c > 0) html += '<div class="cloze-divider"></div>';
+      if (bounds.label) html += `<span class="cloze-heading">${bounds.label}</span> `;
+      const end = Math.min(bounds.end, qtCommitted.length);
+      for (let i = bounds.start; i < end; i++) {
+        if (normWord(qtTargetWords[i]).length === 0) {
+          html += `<span class="type-word-punct">${qtCommitted[i]}</span> `;
+        } else {
+          html += `<span class="type-word" data-idx="${i}">${qtCommitted[i]}</span> `;
+        }
+      }
+    }
+    committedSpan.innerHTML = html;
+    committedSpan.querySelectorAll('.type-word').forEach(el => {
+      el.addEventListener('click', () => {
+        const idx = parseInt(el.dataset.idx);
+        fixFromIndex(idx);
+      });
+    });
+    scrollBoxToBottom();
+  }
+
+  function updateEyebrow() {
+    const eyebrow = document.querySelector('#qtCard .eyebrow');
+    if (eyebrow) eyebrow.textContent = `${item.listLabel} · Item ${item.itemNumber} of ${item.listTotal} · Quick Type · Word ${qtCommitted.length + 1} of ${qtTargetWords.length}`;
+  }
+
+  function updateHintUI(revealedText) {
+    document.getElementById('qtHintWord').textContent = revealedText || '—';
+    document.getElementById('qtHintCountEl').textContent = `Hints: ${qtHintCount}`;
+  }
+
+  function fixFromIndex(idx) {
+    qtCommitted = qtCommitted.slice(0, idx);
+    qtCurrentIndex = idx;
+    qtHintCount++;
+    qtHintedPositions.add(idx);
+    qtWordHintLetters[idx] = qtTargetWords[idx].length;
+    qtHintLevel = 3;
+    input.value = '';
+    input.classList.remove('wrong');
+    renderCommittedWords();
+    updateEyebrow();
+    updateHintUI(qtTargetWords[idx]);
+    input.focus();
+  }
+
+  function giveHint() {
+    if (qtCurrentIndex >= qtTargetWords.length) return;
+    const target = qtTargetWords[qtCurrentIndex];
+    if (qtHintLevel >= 3) {
+      updateHintUI(target);
+      input.focus();
+      return;
+    }
+    qtHintLevel++;
+    qtHintCount++;
+    qtHintedPositions.add(qtCurrentIndex);
+    const revealLen = qtHintLevel >= 3 ? target.length : qtHintLevel;
+    const revealText = target.slice(0, revealLen) + (revealLen < target.length ? '…' : '');
+    updateHintUI(revealText);
+    input.focus();
+  }
+
+  function finishItem() {
+    bumpMastery(item.id, qtHintCount === 0 && qtMistakeCount === 0);
+    qtFinished = true;
+    renderQtSummary();
+  }
+
+  function commitWord() {
+    const raw = input.value;
+    if (!raw.trim()) return;
+    const target = qtTargetWords[qtCurrentIndex];
+    if (normWord(raw) === normWord(target) && normWord(target).length > 0) {
+      qtWordHintLetters[qtCurrentIndex] = qtHintLevel >= 3 ? target.length : qtHintLevel;
+      qtCommitted.push(target);
+      qtCurrentIndex++;
+      qtHintLevel = 0;
+      autoFillQtPunctuationWords();
+      input.value = '';
+      input.classList.remove('wrong');
+      updateHintUI(null);
+      renderCommittedWords();
+      updateEyebrow();
+      if (qtCurrentIndex >= qtTargetWords.length) { finishItem(); return; }
+    } else {
+      if (!input.classList.contains('wrong')) {
+        qtMistakeCount++;
+        qtMistakePositions.add(qtCurrentIndex);
+        document.getElementById('qtMistakeCountEl').textContent = `Mistakes: ${qtMistakeCount}`;
+      }
+      input.classList.add('wrong');
+    }
+  }
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === ' ') {
+      e.preventDefault();
+      commitWord();
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      giveHint();
+    }
+  });
+  input.addEventListener('input', () => {
+    if (input.value.endsWith(' ')) {
+      const wordPart = input.value.slice(0, -1);
+      if (!wordPart.trim()) {
+        input.value = '';
+        return;
+      }
+      input.value = wordPart;
+      commitWord();
+    } else {
+      input.classList.remove('wrong');
+    }
+  });
+  document.getElementById('btnQtHint').addEventListener('click', giveHint);
+  box.addEventListener('click', (e) => { if (e.target === box || e.target === committedSpan) input.focus(); });
+  document.getElementById('btnQtPrevLive').addEventListener('click', () => { qtPrevItem(); renderQt(); });
+  document.getElementById('btnQtNextLive').addEventListener('click', () => { qtNextItem(); renderQt(); });
+
+  renderCommittedWords();
+  input.focus();
+}
+
+function renderQtSummary() {
+  const item = qtItem;
+  const total = qtTargetWords.length;
+  const issues = qtHintCount + qtMistakeCount;
+  const perfect = issues === 0;
+  const color = perfect ? 'var(--green)' : issues <= Math.ceil(total * 0.15) ? 'var(--amber)' : 'var(--red)';
+  function coloredWord(i) {
+    const w = qtCommitted[i];
+    const hintLetters = qtWordHintLetters[i] || 0;
+    const missed = qtMistakePositions.has(i);
+    if (hintLetters > 0) {
+      const revealLen = Math.min(hintLetters, w.length);
+      const redPart = w.slice(0, revealLen);
+      const restPart = w.slice(revealLen);
+      const restHtml = restPart ? (missed ? `<span class="sum-mistake">${restPart}</span>` : restPart) : '';
+      return `<span class="sum-hint">${redPart}</span>${restHtml}`;
+    }
+    if (missed) return `<span class="sum-mistake">${w}</span>`;
+    return w;
+  }
+  let sentenceHtml = '';
+  qtChunkBounds.forEach((bounds, c) => {
+    if (c > 0) sentenceHtml += '<div class="cloze-divider"></div>';
+    if (bounds.label) sentenceHtml += `<span class="cloze-heading">${bounds.label}</span> `;
+    const wordsHtml = [];
+    for (let i = bounds.start; i < bounds.end; i++) wordsHtml.push(coloredWord(i));
+    sentenceHtml += wordsHtml.join(' ');
+  });
+  app.innerHTML = `
+    <div class="card">
+      <div class="eyebrow">${item.listLabel} · Item ${item.itemNumber} of ${item.listTotal} · Quick Type · Results</div>
+      <div style="margin-bottom:10px;">
+        <span class="score-badge" style="background:${color}22;color:${color};">${qtHintCount} hint${qtHintCount===1?'':'s'} · ${qtMistakeCount} mistake${qtMistakeCount===1?'':'s'} · ${total} words</span>
+      </div>
+      <div class="diff-line">${sentenceHtml}</div>
+      ${!perfect ? `<div class="type-legend"><span class="sum-hint">hinted letters</span>&nbsp;&nbsp;<span class="sum-mistake">mistake, no hint</span></div>` : `<div class="why-tag" style="margin-top:12px;">No hints, no mistakes — clean run.</div>`}
+      <div class="btnrow" style="margin-top:16px;">
+        <button class="btn ghost" id="btnQtPrev">‹ Prev</button>
+        <button class="btn ghost" id="btnQtRepeat">Repeat</button>
+        <button class="btn primary" id="btnQtNext">Next ›</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('btnQtPrev').addEventListener('click', () => { qtPrevItem(); renderQt(); });
+  document.getElementById('btnQtRepeat').addEventListener('click', () => { qtRepeatItem(); renderQt(); });
+  document.getElementById('btnQtNext').addEventListener('click', () => { qtNextItem(); renderQt(); });
+}
+
 // ----- QUICK RECALL (title + tagline) -----
 let recallSteps = [];
 let recallIndex = 0;
@@ -2074,7 +2386,10 @@ document.getElementById('settingsHidePrompts').addEventListener('change', (e) =>
   hidePrompts = e.target.checked;
   saveHidePrompts();
   if (currentMode === 'cloze') clozeItem = null; // heading tokens are built at pool time, need a fresh item
-  if (['flash','cloze','verbal'].includes(currentMode)) render();
+  if (currentMode === 'type') typeItem = null;
+  if (currentMode === 'qtype') qtItem = null;
+  if (currentMode === 'order') recallSteps = [];
+  if (['flash','cloze','type','qtype','order','verbal'].includes(currentMode)) render();
 });
 document.getElementById('settingsMasterySpeedHabits').addEventListener('change', (e) => {
   masterySpeedHabits = parseInt(e.target.value) || 1;
