@@ -509,7 +509,7 @@
         <button class="btn miss" id="settingsResetProgress">Reset</button>
       </div>
       <div class="settings-storage-note" id="storageNote"></div>
-      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v21 (Verbal Practice: split long sentences setting)</div>
+      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v23 (Quick Recall: tap title to reveal body text)</div>
     </div>
   </div>
 
@@ -517,7 +517,7 @@
     <button data-mode="flash" class="active">Flashcards</button>
     <button data-mode="cloze">Fill-in</button>
     <button data-mode="type">Type it out</button>
-    <button data-mode="order">Order test</button>
+    <button data-mode="order">Quick Recall</button>
     <button data-mode="verbal">Verbal Practice</button>
     <button data-mode="progress">Progress</button>
   </nav>
@@ -789,7 +789,7 @@ document.querySelectorAll('.scope-toggle button').forEach(btn => {
     flashItem = null;
     clozeItem = null;
     typeItem = null;
-    orderList = [];
+    recallSteps = [];
     verbalSteps = [];
     render();
   });
@@ -1015,7 +1015,7 @@ function render() {
   if (currentMode === 'flash') renderFlash();
   else if (currentMode === 'cloze') renderCloze();
   else if (currentMode === 'type') renderType();
-  else if (currentMode === 'order') renderOrder();
+  else if (currentMode === 'order') renderRecall();
   else if (currentMode === 'verbal') renderVerbal();
   else if (currentMode === 'progress') renderProgress();
 }
@@ -1654,77 +1654,190 @@ function renderTypeSummary() {
   document.getElementById('btnTypeNext').addEventListener('click', () => { typeNextItem(); renderType(); });
 }
 
-// ----- ORDER TEST -----
-let orderList = [];
-let orderChecked = false;
+// ----- QUICK RECALL (title + tagline) -----
+let recallSteps = [];
+let recallIndex = 0;
+let recallResults = [];
+let recallFinished = false;
+let recallAwaitingNext = false;
 
-function orderSourcePool() {
-  if (quizScope === 'habits') return fiveHabits.map(h => ({ id: h.id, title: h.name }));
-  if (quizScope === 'points') return tenPoints.map(p => ({ id: p.id, title: p.title }));
-  return [...fiveHabits.map(h => ({ id: h.id, title: h.name })), ...tenPoints.map(p => ({ id: p.id, title: p.title }))];
+function buildRecallSteps(scope) {
+  const steps = [];
+  if (scope !== 'points') {
+    fiveHabits.forEach((h, idx) => {
+      const itemNumber = idx + 1, listTotal = fiveHabits.length;
+      const base = { itemId: h.id, itemTitle: h.name, listLabel: '5s', itemNumber, listTotal };
+      steps.push({ ...base, label: null, text: h.name, part: 'title' });
+      steps.push({ ...base, label: 'Key Phrase', text: `Remember, "${h.key}"`, part: 'tagline' });
+    });
+  }
+  if (scope !== 'habits') {
+    tenPoints.forEach((p, idx) => {
+      const itemNumber = idx + 1, listTotal = tenPoints.length;
+      const base = { itemId: p.id, itemTitle: p.title, listLabel: '10s', itemNumber, listTotal };
+      steps.push({ ...base, label: null, text: p.title, part: 'title' });
+      steps.push({ ...base, label: 'Why?', text: p.why, part: 'tagline' });
+    });
+  }
+  return steps;
 }
 
-function newOrder() {
-  const correctOrder = orderSourcePool();
-  orderList = [...correctOrder];
-  for (let i=orderList.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [orderList[i],orderList[j]]=[orderList[j],orderList[i]]; }
-  orderChecked = false;
+let recallBodyRevealed = false; // whether the body text is shown under a tapped title
+
+function startRecallSession() {
+  recallSteps = buildRecallSteps(quizScope);
+  recallIndex = 0;
+  recallResults = new Array(recallSteps.length).fill(null);
+  recallFinished = false;
+  recallAwaitingNext = false;
+  recallBodyRevealed = false;
 }
 
-function renderOrder() {
-  if (!orderList.length) newOrder();
-  const correctOrder = orderSourcePool();
-  const scopeLabel = quizScope === 'habits' ? 'Five Seeing Habits' : quizScope === 'points' ? '10 Point Commentary' : 'Full checklist';
-  let itemsHtml = '';
-  orderList.forEach((p, i) => {
-    const correctPos = correctOrder.findIndex(cp => cp.id === p.id);
-    const isCorrect = correctPos === i;
-    let cls = '';
-    if (orderChecked) cls = isCorrect ? 'correct' : 'incorrect';
-    itemsHtml += `
-      <li class="order-item ${cls}" data-idx="${i}">
-        <span class="num">${i+1}</span>
-        <span class="item-title">${p.title}</span>
-        <span class="arrows">
-          <button data-dir="up" data-idx="${i}" ${orderChecked?'disabled':''}>↑</button>
-          <button data-dir="down" data-idx="${i}" ${orderChecked?'disabled':''}>↓</button>
-        </span>
-      </li>`;
-  });
+// Same item-start-boundary trick as Verbal Practice's Prev/Next item, just over 2-step chunks.
+function recallItemStartIndex(fromIndex) {
+  const id = recallSteps[fromIndex].itemId;
+  let i = fromIndex;
+  while (i > 0 && recallSteps[i - 1].itemId === id) i--;
+  return i;
+}
+function recallNextItem() {
+  if (!recallSteps.length) return;
+  const curId = recallSteps[Math.min(recallIndex, recallSteps.length - 1)].itemId;
+  let idx = recallSteps.findIndex((s, i) => i > recallIndex && s.itemId !== curId);
+  if (idx === -1) idx = 0;
+  recallIndex = idx;
+  recallAwaitingNext = false;
+  recallBodyRevealed = false;
+  recallFinished = false;
+  renderRecall();
+}
+function recallPrevItem() {
+  if (!recallSteps.length) return;
+  const curStart = recallItemStartIndex(Math.min(recallIndex, recallSteps.length - 1));
+  if (curStart === 0) {
+    recallIndex = recallItemStartIndex(recallSteps.length - 1);
+  } else {
+    recallIndex = recallItemStartIndex(curStart - 1);
+  }
+  recallAwaitingNext = false;
+  recallBodyRevealed = false;
+  recallFinished = false;
+  renderRecall();
+}
+
+// The body text for a title step — how/what for a habit (key phrase is the next step already),
+// or the full explanation for a point (why is the next step already). Looked up fresh from the
+// source data since recall steps themselves only carry the title/tagline text.
+function recallBodyHtml(step) {
+  if (step.listLabel === '5s') {
+    const h = fiveHabits.find(x => x.id === step.itemId);
+    if (!h) return '';
+    return `
+      ${hidePrompts ? '' : '<div class="row"><div class="lbl">How do you do it?</div></div>'}
+      <div class="row"><div class="val">${h.how}</div></div>
+      ${hidePrompts ? '' : '<div class="row"><div class="lbl">What does it do for you?</div></div>'}
+      <div class="row"><div class="val">${h.what}</div></div>
+    `;
+  }
+  const p = tenPoints.find(x => x.id === step.itemId);
+  if (!p) return '';
+  return `<div class="row"><div class="val">${p.text}</div></div>`;
+}
+
+function renderRecall() {
+  if (!recallSteps.length) startRecallSession();
+  if (recallFinished) { renderRecallSummary(); return; }
+  const step = recallSteps[recallIndex];
+  const isTitleStep = step.part === 'title';
+  const labelHtml = (!hidePrompts && step.label) ? `<div class="cloze-heading" style="margin-bottom:8px;">${step.label}</div>` : '';
+  const buttonsHtml = recallAwaitingNext
+    ? `<div class="btnrow" style="margin-top:20px;">
+         <button class="btn primary" id="recallNext">Reveal next</button>
+       </div>`
+    : `<div class="btnrow" style="margin-top:20px;">
+         <button class="btn miss" id="recallMiss">Missed it</button>
+         <button class="btn got" id="recallGot">Got it</button>
+       </div>`;
+  const titleHtml = isTitleStep
+    ? `<div class="flash-face" id="recallTitleFace" style="cursor:pointer; text-align:left; align-items:flex-start;">
+         <div class="flash-title" style="text-align:left; font-size:1.15rem; line-height:1.4;">${step.text}</div>
+         ${recallBodyRevealed
+           ? `<div class="flash-back" style="margin-top:14px;">${recallBodyHtml(step)}</div>`
+           : `<div class="flash-hint" style="margin-top:6px;">tap to reveal the body text</div>`}
+       </div>`
+    : `<div class="flash-title" style="text-align:left; font-size:1.15rem; line-height:1.4;">${step.text}</div>`;
+  app.innerHTML = `
+    <div class="card" id="recallCard">
+      <div class="eyebrow">${step.listLabel} · Item ${step.itemNumber} of ${step.listTotal} · Quick Recall · Step ${recallIndex + 1} of ${recallSteps.length}</div>
+      ${labelHtml}
+      ${titleHtml}
+      ${buttonsHtml}
+      <div class="cloze-nav" style="margin-top:14px; margin-bottom:0;">
+        <button class="btn ghost" id="btnRecallPrev">‹ Prev item</button>
+        <button class="btn ghost" id="btnRecallNext">Next item ›</button>
+      </div>
+    </div>
+    <div class="helptext">Title, then its tagline — say it out loud, mark whether you got it right. On the title step, tap it to check the body text if you need to. Quick pass through everything instead of the full verbatim text.</div>
+  `;
+  const cardEl = document.getElementById('recallCard');
+  if (cardEl) cardEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const titleFace = document.getElementById('recallTitleFace');
+  if (titleFace) titleFace.addEventListener('click', () => { recallBodyRevealed = !recallBodyRevealed; renderRecall(); });
+  const missBtn = document.getElementById('recallMiss');
+  const gotBtn = document.getElementById('recallGot');
+  const nextBtn = document.getElementById('recallNext');
+  if (missBtn) missBtn.addEventListener('click', () => recordRecall(false));
+  if (gotBtn) gotBtn.addEventListener('click', () => recordRecall(true));
+  if (nextBtn) nextBtn.addEventListener('click', advanceRecall);
+  document.getElementById('btnRecallPrev').addEventListener('click', recallPrevItem);
+  document.getElementById('btnRecallNext').addEventListener('click', recallNextItem);
+}
+
+function recordRecall(correct) {
+  const step = recallSteps[recallIndex];
+  recallResults[recallIndex] = correct;
+  bumpMastery(step.itemId, correct);
+  recallAwaitingNext = true;
+  renderRecall();
+}
+
+function advanceRecall() {
+  recallIndex++;
+  recallAwaitingNext = false;
+  recallBodyRevealed = false;
+  if (recallIndex >= recallSteps.length) recallFinished = true;
+  renderRecall();
+}
+
+function renderRecallSummary() {
+  const total = recallSteps.length;
+  const correctCount = recallResults.filter(r => r === true).length;
+  const pct = total ? Math.round((correctCount / total) * 100) : 100;
+  const color = pct === 100 ? 'var(--green)' : pct >= 60 ? 'var(--amber)' : 'var(--red)';
+  const rowsHtml = recallSteps.map((step, i) => {
+    const ok = recallResults[i];
+    const cls = ok ? 'correct' : 'incorrect';
+    const icon = ok ? '✓' : '✕';
+    const iconColor = ok ? 'var(--green)' : 'var(--red)';
+    const labelBit = (step.label && !hidePrompts) ? `${step.label} ` : '';
+    return `<li class="order-item ${cls}">
+      <span class="num" style="color:${iconColor};">${icon}</span>
+      <span class="item-title">${step.listLabel} · ${step.itemTitle} — ${labelBit}${step.text}</span>
+    </li>`;
+  }).join('');
   app.innerHTML = `
     <div class="card">
-      <div class="eyebrow">${scopeLabel} · Order test</div>
-      <div class="helptext" style="margin-bottom:12px;">Put these back into the order they appear on the sheet, using the arrows.</div>
-      <ul class="order-list">${itemsHtml}</ul>
-      <div class="btnrow">
-        <button class="btn ghost" id="btnShuffle">Reshuffle</button>
-        <button class="btn primary" id="btnCheckOrder" ${orderChecked?'disabled':''}>Check order</button>
+      <div class="eyebrow">Quick Recall · Results</div>
+      <div style="margin-bottom:14px;">
+        <span class="score-badge" style="background:${color}22;color:${color};">${correctCount}/${total} correct</span>
       </div>
-      <div id="orderResult" style="margin-top:10px;"></div>
+      <ul class="order-list">${rowsHtml}</ul>
+      <div class="btnrow" style="margin-top:14px;">
+        <button class="btn primary" id="recallRestart">Start over</button>
+      </div>
     </div>
   `;
-  document.querySelectorAll('.arrows button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const idx = parseInt(btn.dataset.idx);
-      const dir = btn.dataset.dir;
-      const swapWith = dir === 'up' ? idx-1 : idx+1;
-      if (swapWith < 0 || swapWith >= orderList.length) return;
-      [orderList[idx], orderList[swapWith]] = [orderList[swapWith], orderList[idx]];
-      renderOrder();
-    });
-  });
-  document.getElementById('btnShuffle').addEventListener('click', () => { newOrder(); renderOrder(); });
-  document.getElementById('btnCheckOrder').addEventListener('click', () => {
-    orderChecked = true;
-    let correctCount = 0;
-    orderList.forEach((p,i) => { if (correctOrder.findIndex(cp=>cp.id===p.id) === i) correctCount++; });
-    orderList.forEach((p,i) => bumpMastery(p.id, correctOrder.findIndex(cp=>cp.id===p.id) === i));
-    renderOrder();
-    const total = orderList.length;
-    const pct = Math.round((correctCount/total)*100);
-    const color = pct === 100 ? 'var(--green)' : pct >= 60 ? 'var(--amber)' : 'var(--red)';
-    document.getElementById('orderResult').innerHTML = `<span class="score-badge" style="background:${color}22;color:${color};">${correctCount}/${total} in correct position</span>`;
-  });
+  document.getElementById('recallRestart').addEventListener('click', () => { startRecallSession(); renderRecall(); });
 }
 
 // ----- VERBAL PRACTICE -----
