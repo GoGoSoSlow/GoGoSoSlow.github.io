@@ -503,13 +503,77 @@
       </div>
       <div class="settings-row">
         <div class="settings-row-text">
+          <div class="settings-row-title">10s summary mode</div>
+          <div class="settings-row-desc">Swaps the body of each 10 Point Commentary item for a shorter, easier-to-memorize version. The title and Why? stay exactly as written.</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="settingsTenSummaryMode">
+          <span class="switch-track"></span>
+        </label>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-text">
+          <div class="settings-row-title">Edit 10s summaries</div>
+          <div class="settings-row-desc">Rewrite any of the 10 summaries in your own words. Your edits are kept even if summary mode is off.</div>
+        </div>
+        <button class="btn ghost" id="settingsEditSummaries">Edit</button>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-text">
+          <div class="settings-row-title">Backup &amp; restore</div>
+          <div class="settings-row-desc">Export all your progress, custom summaries, and settings to a file — or import one back in, e.g. after switching browsers or devices.</div>
+        </div>
+        <button class="btn ghost" id="settingsBackupRestore">Open</button>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-text">
           <div class="settings-row-title">Reset progress</div>
           <div class="settings-row-desc">Clears mastery levels for every habit and point. Text size and quiz scope are kept.</div>
         </div>
         <button class="btn miss" id="settingsResetProgress">Reset</button>
       </div>
       <div class="settings-storage-note" id="storageNote"></div>
-      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v24 (New mode: Quick Type — titles + tagline, typed with hints/mistakes)</div>
+      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v25 (10s summary mode + editor, backup/restore)</div>
+    </div>
+  </div>
+
+  <div class="settings-overlay" id="summaryEditOverlay">
+    <div class="settings-panel" style="max-width:560px;">
+      <div class="settings-panel-header">
+        <h2>Edit 10s Summaries</h2>
+        <button class="settings-close" id="summaryEditClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="helptext" style="margin-top:0; margin-bottom:14px;">Rewrite any point's summary in your own words. Leave a box empty (or click Reset) to fall back to the built-in default.</div>
+      <div id="summaryEditList"></div>
+      <div class="btnrow" style="margin-top:16px;">
+        <button class="btn ghost" id="summaryEditCancel">Cancel</button>
+        <button class="btn primary" id="summaryEditSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-overlay" id="backupOverlay">
+    <div class="settings-panel" style="max-width:560px;">
+      <div class="settings-panel-header">
+        <h2>Backup &amp; Restore</h2>
+        <button class="settings-close" id="backupClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="sec-label" style="margin-top:0;">Export</div>
+      <div class="helptext" style="margin-top:0;">Saves your progress, mastery levels, custom summaries, and settings.</div>
+      <div class="btnrow">
+        <button class="btn ghost" id="backupCopy">Copy to clipboard</button>
+        <button class="btn primary" id="backupDownload">Download file</button>
+      </div>
+      <textarea class="answer" id="backupExportText" readonly style="margin-top:10px; min-height:80px; font-size:0.72rem;"></textarea>
+
+      <div class="sec-label">Import</div>
+      <div class="helptext" style="margin-top:0;">Choose a previously exported file, or paste its contents below.</div>
+      <input type="file" id="backupFileInput" accept="application/json" style="margin-bottom:10px;">
+      <textarea class="answer" id="backupImportText" placeholder="Paste exported JSON here…" style="min-height:80px; font-size:0.72rem;"></textarea>
+      <div class="btnrow" style="margin-top:10px;">
+        <button class="btn primary" id="backupImportBtn">Import</button>
+      </div>
+      <div class="why-tag" id="backupStatus" style="margin-top:10px;"></div>
     </div>
   </div>
 
@@ -584,6 +648,23 @@ const tenPoints = [
 ];
 
 const allItemIds = [...fiveHabits.map(h=>h.id), ...tenPoints.map(p=>p.id)];
+
+// Default short-form summaries for "10s summary mode" — the title and Why? stay exactly as
+// written on the sheet; only the body gets swapped for this shorter, easier-to-hold version.
+// The person can override any of these in Settings, which is stored separately (see
+// tenSummaryCustom) so these defaults are never lost even after editing.
+const TEN_SUMMARIES_DEFAULT = {
+  p0: "Scan left-right-left before entering. Check mirrors as you cross to make sure it's clear.",
+  p1: "Leave enough space to see the rear tires of the car ahead, sized to your vehicle's length, so you can pull around it if it stalls.",
+  p2: "Count \"one-two-three\" after the car ahead starts moving before you do. Builds a space cushion and brings your eyes back up.",
+  p3: "Count seconds from when the car ahead passes a fixed point until you reach it — 4 to 6 seconds under 30 mph, 6 to 8 over.",
+  p4: "Count seconds to a fixed point ahead the same way — aim for 8 to 12 seconds of eye lead time.",
+  p5: "Check parked cars' wheels, lights, and exhaust for signs someone's about to pull out or step out. If unsure, treat it as occupied.",
+  p6: "If you didn't see a light turn green, pick a decision point — stop if you still can, or go through without hesitating once you pass it.",
+  p7: "Make eye contact with anyone near your path. Horn first, then lights and signals.",
+  p8: "Signal, check your mirrors, check your blind spot over your shoulder, then pull out — keep the signal on until you're fully in the lane.",
+  p9: "Check a mirror or gauge every 5 to 8 seconds, then bring your eyes back to the front — never mirror to mirror."
+};
 
 // Manual break points for Verbal Practice's "Split long sentences" setting. Auto-splitting on
 // punctuation alone doesn't catch these — they're long single sentences with a natural seam
@@ -706,6 +787,43 @@ async function loadHidePrompts() {
 
 async function saveHidePrompts() {
   await Store.set('hide-prompts', String(hidePrompts));
+}
+
+// ---------- 10s SUMMARY MODE ----------
+let tenSummaryMode = false;
+let tenSummaryCustom = {}; // point id -> custom summary text (only set for edited points)
+
+async function loadTenSummaryMode() {
+  try {
+    const val = await Store.get('ten-summary-mode');
+    tenSummaryMode = val === 'true';
+  } catch (e) { tenSummaryMode = false; }
+  const toggle = document.getElementById('settingsTenSummaryMode');
+  if (toggle) toggle.checked = tenSummaryMode;
+}
+async function saveTenSummaryMode() {
+  await Store.set('ten-summary-mode', String(tenSummaryMode));
+}
+
+async function loadTenSummaryCustom() {
+  try {
+    const val = await Store.get('ten-summary-custom');
+    tenSummaryCustom = val ? JSON.parse(val) : {};
+  } catch (e) { tenSummaryCustom = {}; }
+}
+async function saveTenSummaryCustom() {
+  await Store.set('ten-summary-custom', JSON.stringify(tenSummaryCustom));
+}
+
+// The effective body text for a 10-point item — original verbatim text, or (when summary
+// mode is on) the custom edit if there is one, else the built-in default summary. Title and
+// Why? are untouched by this everywhere they're used.
+function getPointBodyText(p) {
+  if (!tenSummaryMode) return p.text;
+  if (tenSummaryCustom[p.id] !== undefined && tenSummaryCustom[p.id] !== null && tenSummaryCustom[p.id] !== '') {
+    return tenSummaryCustom[p.id];
+  }
+  return TEN_SUMMARIES_DEFAULT[p.id] || p.text;
 }
 
 // ---------- VERBAL PRACTICE: SPLIT LONG SENTENCES SETTING ----------
@@ -1069,7 +1187,7 @@ function renderFlash() {
     `;
   } else {
     backHtml = `
-      <div class="row"><div class="lbl">Explanation</div><div class="val">${item.text}</div></div>
+      <div class="row"><div class="lbl">Explanation</div><div class="val">${getPointBodyText(item)}</div></div>
       ${hidePrompts ? `<div class="row"><div class="val key">${item.why}</div></div>` : `<div class="row"><div class="lbl">Why?</div><div class="val key">${item.why}</div></div>`}
     `;
   }
@@ -1156,7 +1274,7 @@ function clozeSourcePool() {
   });
   const pointItems = scopedPoints().map((p, idx) => {
     const titleWords = blankTitles ? tokenize(p.title) : [];
-    const bodyWords = tokenize(p.text);
+    const bodyWords = tokenize(getPointBodyText(p));
     const whyWords = blankTitles ? tokenize(p.why) : [];
     const words = [...titleWords, ...bodyWords, ...whyWords];
     const blankable = [...titleWords.map(() => true), ...bodyWords.map(() => true), ...whyWords.map(() => true)];
@@ -1363,7 +1481,7 @@ function typeSourcePool() {
     id: p.id, title: p.title,
     chunks: [
       ...(typeIncludeTitles ? [{ label: null, words: tokenize(p.title) }] : []),
-      { label: null, words: tokenize(p.text) },
+      { label: null, words: tokenize(getPointBodyText(p)) },
       { label: hidePrompts ? null : 'Why?', words: tokenize(p.why) }
     ],
     listLabel: '10s', itemNumber: idx + 1, listTotal: tenPoints.length,
@@ -2053,7 +2171,7 @@ function recallBodyHtml(step) {
   }
   const p = tenPoints.find(x => x.id === step.itemId);
   if (!p) return '';
-  return `<div class="row"><div class="val">${p.text}</div></div>`;
+  return `<div class="row"><div class="val">${getPointBodyText(p)}</div></div>`;
 }
 
 function renderRecall() {
@@ -2182,7 +2300,7 @@ function buildVerbalSteps(scope) {
       const base = { itemId: p.id, itemTitle: p.title, listLabel: '10s', itemNumber, listTotal };
       steps.push({ ...base, label: null, text: p.title, part: 'title' });
       const overrides = splitLongSentences ? VERBAL_SENTENCE_SPLITS[p.id] : null;
-      splitSentences(p.text).forEach(sentence => {
+      splitSentences(getPointBodyText(p)).forEach(sentence => {
         const parts = (overrides && overrides[sentence]) ? overrides[sentence] : [sentence];
         parts.forEach(part => steps.push({ ...base, label: null, text: part, part: 'body' }));
       });
@@ -2409,9 +2527,157 @@ document.getElementById('settingsSplitSentences').addEventListener('change', (e)
   saveSplitLongSentences();
   if (currentMode === 'verbal') { verbalSteps = []; render(); } // step list changes length, need a fresh session
 });
+document.getElementById('settingsTenSummaryMode').addEventListener('change', (e) => {
+  tenSummaryMode = e.target.checked;
+  saveTenSummaryMode();
+  // body text length/content changed for every 10s item — force a fresh pick everywhere it's used
+  clozeItem = null;
+  typeItem = null;
+  recallSteps = [];
+  verbalSteps = [];
+  if (['cloze','type','order','verbal'].includes(currentMode)) render();
+});
+
+// ---------- 10s SUMMARY EDITOR ----------
+function openSummaryEditor() {
+  const list = document.getElementById('summaryEditList');
+  list.innerHTML = tenPoints.map(p => {
+    const current = (tenSummaryCustom[p.id] !== undefined && tenSummaryCustom[p.id] !== null && tenSummaryCustom[p.id] !== '')
+      ? tenSummaryCustom[p.id] : TEN_SUMMARIES_DEFAULT[p.id];
+    return `
+      <div style="margin-bottom:16px;">
+        <div class="settings-row-title" style="margin-bottom:6px;">${p.title}</div>
+        <textarea class="answer summary-edit-box" data-id="${p.id}" style="min-height:60px; font-size:0.85rem;">${current}</textarea>
+        <button class="reset-link" data-reset-id="${p.id}" style="margin-top:4px;">reset to default</button>
+      </div>
+    `;
+  }).join('');
+  list.querySelectorAll('[data-reset-id]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.resetId;
+      const box = list.querySelector(`textarea[data-id="${id}"]`);
+      if (box) box.value = TEN_SUMMARIES_DEFAULT[id];
+    });
+  });
+  document.getElementById('summaryEditOverlay').classList.add('open');
+}
+function closeSummaryEditor() {
+  document.getElementById('summaryEditOverlay').classList.remove('open');
+}
+document.getElementById('settingsEditSummaries').addEventListener('click', openSummaryEditor);
+document.getElementById('summaryEditClose').addEventListener('click', closeSummaryEditor);
+document.getElementById('summaryEditCancel').addEventListener('click', closeSummaryEditor);
+document.getElementById('summaryEditOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'summaryEditOverlay') closeSummaryEditor();
+});
+document.getElementById('summaryEditSave').addEventListener('click', async () => {
+  const boxes = document.querySelectorAll('.summary-edit-box');
+  const next = {};
+  boxes.forEach(box => {
+    const id = box.dataset.id;
+    const val = box.value.trim();
+    if (val && val !== TEN_SUMMARIES_DEFAULT[id]) next[id] = val;
+  });
+  tenSummaryCustom = next;
+  await saveTenSummaryCustom();
+  // summaries changed — force a fresh pick everywhere they're used
+  clozeItem = null;
+  typeItem = null;
+  recallSteps = [];
+  verbalSteps = [];
+  closeSummaryEditor();
+  if (['cloze','type','order','verbal'].includes(currentMode)) render();
+});
+
+// ---------- BACKUP & RESTORE ----------
+const BACKUP_KEYS = [
+  'mastery-data', 'font-scale', 'quiz-scope', 'quiz-mode', 'blank-titles', 'hide-prompts',
+  'mastery-speed-habits', 'mastery-speed-points', 'type-include-titles', 'item-order-mode',
+  'split-long-sentences', 'ten-summary-mode', 'ten-summary-custom'
+];
+
+async function buildBackupJson() {
+  const data = {};
+  for (const key of BACKUP_KEYS) {
+    const val = await Store.get(key);
+    if (val !== null && val !== undefined) data[key] = val;
+  }
+  return JSON.stringify({ app: 'ups-5s-10s', version: 1, exportedAt: new Date().toISOString(), data }, null, 2);
+}
+
+async function applyBackupJson(jsonText) {
+  const statusEl = document.getElementById('backupStatus');
+  let payload;
+  try {
+    payload = JSON.parse(jsonText);
+  } catch (e) {
+    statusEl.textContent = "That doesn't look like valid backup JSON.";
+    return;
+  }
+  if (!payload || typeof payload.data !== 'object') {
+    statusEl.textContent = "That file doesn't look like a backup from this app.";
+    return;
+  }
+  if (!confirm('Import this backup? It will overwrite your current progress and settings.')) return;
+  for (const [key, val] of Object.entries(payload.data)) {
+    if (BACKUP_KEYS.includes(key) && val !== null && val !== undefined) {
+      await Store.set(key, val);
+    }
+  }
+  statusEl.textContent = 'Import complete — reloading…';
+  setTimeout(() => location.reload(), 600);
+}
+
+function openBackup() {
+  document.getElementById('backupStatus').textContent = '';
+  document.getElementById('backupImportText').value = '';
+  buildBackupJson().then(json => { document.getElementById('backupExportText').value = json; });
+  document.getElementById('backupOverlay').classList.add('open');
+}
+function closeBackup() {
+  document.getElementById('backupOverlay').classList.remove('open');
+}
+document.getElementById('settingsBackupRestore').addEventListener('click', openBackup);
+document.getElementById('backupClose').addEventListener('click', closeBackup);
+document.getElementById('backupOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'backupOverlay') closeBackup();
+});
+document.getElementById('backupCopy').addEventListener('click', async () => {
+  const text = document.getElementById('backupExportText').value;
+  try {
+    await navigator.clipboard.writeText(text);
+    document.getElementById('backupStatus').textContent = 'Copied to clipboard.';
+  } catch (e) {
+    document.getElementById('backupStatus').textContent = "Couldn't copy automatically — select the text above and copy it manually.";
+  }
+});
+document.getElementById('backupDownload').addEventListener('click', () => {
+  const text = document.getElementById('backupExportText').value;
+  const blob = new Blob([text], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'ups-5s-10s-backup.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+document.getElementById('backupFileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => { document.getElementById('backupImportText').value = reader.result; };
+  reader.readAsText(file);
+});
+document.getElementById('backupImportBtn').addEventListener('click', () => {
+  const text = document.getElementById('backupImportText').value.trim();
+  if (!text) { document.getElementById('backupStatus').textContent = 'Paste or choose a backup file first.'; return; }
+  applyBackupJson(text);
+});
 
 // ---------- INIT ----------
-Promise.all([loadScope(), loadFontScale(), loadMastery(), loadMode(), loadBlankTitles(), loadHidePrompts(), loadMasterySpeed(), loadTypeIncludeTitles(), loadItemOrderMode(), loadSplitLongSentences()]).then(render);
+Promise.all([loadScope(), loadFontScale(), loadMastery(), loadMode(), loadBlankTitles(), loadHidePrompts(), loadMasterySpeed(), loadTypeIncludeTitles(), loadItemOrderMode(), loadSplitLongSentences(), loadTenSummaryMode(), loadTenSummaryCustom()]).then(render);
 </script>
 </body>
 </html>
