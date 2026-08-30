@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+<title>UPS Pretrip Practice</title>
+<style>
+  :root {
+    --asphalt: #16191c;
+    --panel: #202429;
+    --panel2: #262b31;
+    --line: #34393f;
+    --amber: #f2a900;
+    --green: #4caf6d;
+    --red: #d9534f;
+    --text: #e9e7e0;
+    --text-dim2: #9198a0;
+    --mono: 'JetBrains Mono', 'Courier New', monospace;
+  }
+  * { box-sizing: border-box; }
+  html { font-size: 118%; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--asphalt);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+  }
+  body {
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 78px, rgba(242,169,0,0.035) 78px, rgba(242,169,0,0.035) 82px);
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 20px 16px 60px; }
+
+  header.top {
+    border-bottom: 2px solid var(--amber);
+    padding-bottom: 12px; margin-bottom: 18px;
+  }
+  header.top h1 {
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin: 0 0 4px;
+    color: var(--amber);
+  }
+  header.top .sub {
+    font-size: 0.7rem;
+    color: var(--text-dim2);
+    font-family: var(--mono);
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 14px;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 12px;
+  }
+  .pretrip-img {
+    display: block;
+    width: 100%;
+    max-height: 340px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid var(--line);
+    margin-bottom: 14px;
+  }
+  .section-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.35;
+    margin-bottom: 14px;
+  }
+  ul.check-list {
+    list-style: none;
+    margin: 0; padding: 0;
+  }
+  ul.check-list li {
+    padding: 8px 0 8px 22px;
+    border-bottom: 1px solid var(--line);
+    font-size: 1rem;
+    line-height: 1.4;
+    position: relative;
+  }
+  ul.check-list li:last-child { border-bottom: none; }
+  ul.check-list li::before {
+    content: "›";
+    position: absolute; left: 0; top: 7px;
+    color: var(--amber);
+    font-weight: 700;
+  }
+
+  .btnrow { display: flex; gap: 8px; margin-top: 18px; }
+  .btn {
+    flex: 1;
+    border: none; border-radius: 4px;
+    padding: 13px; font-size: 0.9rem; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+  .btn.primary { background: var(--amber); color: #1a1400; }
+  .btn.ghost { background: var(--panel2); color: var(--text); border: 1px solid var(--line); }
+  .btn.miss { background: rgba(217,83,79,0.15); color: var(--red); border: 1px solid var(--red); }
+  .btn.got { background: rgba(76,175,109,0.15); color: var(--green); border: 1px solid var(--green); }
+
+  .nav-row { display: flex; gap: 8px; margin-top: 14px; }
+  .nav-row .btn { font-size: 0.78rem; padding: 10px; }
+
+  .helptext { font-size: 0.82rem; color: var(--text-dim2); line-height: 1.5; }
+
+  .score-badge {
+    display: inline-block; font-family: var(--mono); font-weight: 700;
+    padding: 4px 10px; border-radius: 3px; font-size: 0.9rem;
+  }
+  .report-list { list-style: none; padding: 0; margin: 14px 0 0; }
+  .report-item {
+    background: var(--panel2); border: 1px solid var(--line); border-radius: 4px;
+    padding: 10px 12px; margin-bottom: 6px;
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: 0.88rem; line-height: 1.4;
+  }
+  .report-item.correct { border-color: var(--green); background: rgba(76,175,109,0.08); }
+  .report-item.incorrect { border-color: var(--red); background: rgba(217,83,79,0.08); }
+  .report-item .icon { font-weight: 700; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>UPS Pretrip Practice</h1>
+    <div class="sub" id="progressLabel">loading…</div>
+  </header>
+  <div id="app"></div>
+</div>
+
+<script>
+// ---------- DATA ----------
+// Each card is one physical location/process from the pretrip. Sections are always
+// worked in strict sequence — this is a fixed walk-around, not something to randomize.
+const cards = [
+  { title: "Approach vehicle", items: [
+    "No Pooling Liquids",
+    "Check Oil & Water"
+  ]},
+  { title: "Get in passenger side, 3 pts contact", items: [
+    "Hazard Triangles",
+    "Hazmat Papers",
+    "Hazmat Book",
+    "Hazmat Sticker",
+    "Charged Fire Extinguisher",
+    "Check DVIR"
+  ]},
+  { title: "Sit in driver seat", items: [
+    "Glass is Clean, not Cracked or Broken",
+    "Mirrors Adjusted",
+    "(Turn On Headlights) Low Beams, High Beams, (Turn On) 4-Way Flashers"
+  ]},
+  { title: "Get out, 3 pts contact", items: [
+    "Check steering wheel for Excessive Play",
+    "(Start at the Top) Mirror Bracket",
+    "Vehicle Number",
+    "Side Marker Light",
+    "Hood Latch",
+    "Front Tire Check (4/32 tread, pressure, cuts, lugs, stem/caps)"
+  ]},
+  { title: "Move around front, starting at top", items: [
+    "Clearance Lights",
+    "Vehicle Number",
+    "Blinker Light & Lens, Headlight & Lens",
+    "Bumper",
+    "Headlight & Lens, Blinker Light & Lens"
+  ]},
+  { title: "Move to passenger front", items: [
+    "Mirror Bracket",
+    "Hood Latch",
+    "Side Marker Light",
+    "Vehicle Number",
+    "Front Tire Check (4/32 tread, pressure, cuts, lugs, stem/caps)"
+  ]},
+  { title: "Passenger door", items: [
+    "(Check and close Side Door) Glass Clean, not Cracked or Broken (Latch Open)"
+  ]},
+  { title: "Z-scan passenger side", items: [
+    "No Cuts or Scratches Down to Bare Metal",
+    "DOT Number (Bottom Right)",
+    "Rear Tire Check (2/32 tread, pressure, cuts, lugs, stem/caps)",
+    "Rear Marker Light (or Reflective Sticker or Both — Bottom Left Corner)"
+  ]},
+  { title: "Move to rear, start at top", items: [
+    "Rear Marker Lights",
+    "Camera Lens Adjusted & Not Cracked",
+    "Vehicle Number (Top Left)",
+    "No Cuts or Scratches Down to Bare Metal",
+    "(Open Rear Door) Check Cables (Close Rear Door)",
+    "(Step Back, Point to Both) Brake Lights & Lenses, Reverse Light Lenses",
+    "License Plate & Light (Hold Hand Under Light), Rear Bumper"
+  ]},
+  { title: "Move to driver's side, Z-scan", items: [
+    "(Side Wall Check) No Cuts or Scratches Down to Bare Metal",
+    "Rear Tire Check (2/32 tread, pressure, cuts, lugs, stem/caps)",
+    "Gas Cap (Twist to Tighten)",
+    "DOT Number (Bottom Left)",
+    "Rear Marker Light (or Reflective Sticker or Both — Bottom Right Corner)"
+  ]},
+  { title: "Driver's door check", items: [
+    "(Pull Side Door) Glass Clean, not Cracked or Broken (Latch Open)"
+  ]},
+  { title: "Enter driver's door, 3 pts of contact, push fob once", items: [
+    "Push Engine Start ONCE",
+    "Buckle Seatbelt",
+    "Foot on Brake, Start Vehicle",
+    "Listen for Unusual Engine Noise (Keep Foot on Brake)",
+    "Turn Off Headlights & 4-Way Flashers"
+  ]},
+  { title: "Cab Z-scan", items: [
+    "Clearance Sticker, Rear Monitor Audio & Video Adjusted",
+    "(Point to Gauges) Oil Pressure, Amp Meter, Speedometer, Water Temp, Fuel — working and reading normal",
+    "Tap Horn",
+    "Check Blinkers & Listen for Clicking",
+    "Ebrake Test — shouldn't Move",
+    "Regular Brake Test"
+  ]},
+  { title: "Final step", items: [
+    "Check Reverse & Brake Lights Using the Buddy System or a Reflective Surface",
+    "Log anything wrong in the DVIR"
+  ]}
+];
+
+// ---------- STATE ----------
+let idx = 0;
+let results = new Array(cards.length).fill(null);
+let revealed = false;   // whether the text card is shown for the current section yet
+let awaitingNext = false;
+let finished = false;
+
+const app = document.getElementById('app');
+
+function updateProgressLabel() {
+  document.getElementById('progressLabel').textContent =
+    finished ? 'Run complete' : `Section ${idx + 1} of ${cards.length}`;
+}
+
+function render() {
+  updateProgressLabel();
+  if (finished) { renderReport(); return; }
+  const card = cards[idx];
+  const imgSrc = `${idx + 1}.jpg`;
+  const imgHtml = `
+    <img src="${imgSrc}" alt="Cue photo for section ${idx + 1}" class="pretrip-img" id="pretripImg"
+         onerror="this.style.display='none'; var n=document.getElementById('imgMissingNote'); if(n) n.style.display='block';">
+    <div class="helptext" id="imgMissingNote" style="display:none; margin-bottom:10px;">(No photo found for ${imgSrc} — make sure it's in the same folder as this page.)</div>
+  `;
+
+  let bodyHtml;
+  if (!revealed) {
+    bodyHtml = `
+      ${imgHtml}
+      <div class="btnrow"><button class="btn primary" id="btnReveal">Reveal</button></div>
+    `;
+  } else {
+    const itemsHtml = card.items.map(t => `<li>${t}</li>`).join('');
+    const buttonsHtml = awaitingNext
+      ? `<div class="btnrow"><button class="btn primary" id="btnNext">Next section</button></div>`
+      : `<div class="btnrow">
+           <button class="btn miss" id="btnMiss">Missed it</button>
+           <button class="btn got" id="btnGot">Got it</button>
+         </div>`;
+    bodyHtml = `
+      ${imgHtml}
+      <div class="section-title">${card.title}</div>
+      <ul class="check-list">${itemsHtml}</ul>
+      ${buttonsHtml}
+    `;
+  }
+
+  app.innerHTML = `
+    <div class="card" id="mainCard">
+      <div class="eyebrow">Section ${idx + 1} of ${cards.length}</div>
+      ${bodyHtml}
+      <div class="nav-row">
+        <button class="btn ghost" id="btnPrev">‹ Prev section</button>
+        <button class="btn ghost" id="btnJumpNext">Next section ›</button>
+      </div>
+    </div>
+    <div class="helptext">Look at the photo and say the section out loud from memory, then reveal to check. Prev/Next jump straight to a section if you want to drill just one part.</div>
+  `;
+  const mainCard = document.getElementById('mainCard');
+  if (mainCard) mainCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const revealBtn = document.getElementById('btnReveal');
+  const missBtn = document.getElementById('btnMiss');
+  const gotBtn = document.getElementById('btnGot');
+  const nextBtn = document.getElementById('btnNext');
+  if (revealBtn) revealBtn.addEventListener('click', () => { revealed = true; render(); });
+  if (missBtn) missBtn.addEventListener('click', () => record(false));
+  if (gotBtn) gotBtn.addEventListener('click', () => record(true));
+  if (nextBtn) nextBtn.addEventListener('click', advance);
+  document.getElementById('btnPrev').addEventListener('click', () => goTo(idx - 1));
+  document.getElementById('btnJumpNext').addEventListener('click', () => goTo(idx + 1));
+}
+
+function goTo(target) {
+  let t = target;
+  if (t < 0) t = cards.length - 1;
+  if (t >= cards.length) t = 0;
+  idx = t;
+  revealed = false;
+  awaitingNext = false;
+  finished = false;
+  render();
+}
+
+function record(correct) {
+  results[idx] = correct;
+  awaitingNext = true;
+  render();
+}
+
+function advance() {
+  idx++;
+  revealed = false;
+  awaitingNext = false;
+  if (idx >= cards.length) finished = true;
+  render();
+}
+
+function renderReport() {
+  const total = cards.length;
+  const correctCount = results.filter(r => r === true).length;
+  const pct = Math.round((correctCount / total) * 100);
+  const color = pct === 100 ? 'var(--green)' : pct >= 70 ? 'var(--amber)' : 'var(--red)';
+  const rows = cards.map((card, i) => {
+    const ok = results[i];
+    const cls = ok ? 'correct' : 'incorrect';
+    const icon = ok ? '✓' : '✕';
+    const iconColor = ok ? 'var(--green)' : 'var(--red)';
+    return `<li class="report-item ${cls}">
+      <span class="icon" style="color:${iconColor};">${icon}</span>
+      <span>${card.title}</span>
+    </li>`;
+  }).join('');
+  app.innerHTML = `
+    <div class="card">
+      <div class="eyebrow">Report Card</div>
+      <div style="margin-bottom:6px;">
+        <span class="score-badge" style="background:${color}22;color:${color};">${correctCount}/${total} sections correct</span>
+      </div>
+      <ul class="report-list">${rows}</ul>
+      <div class="btnrow" style="margin-top:16px;">
+        <button class="btn primary" id="btnRestart">Start over</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('btnRestart').addEventListener('click', () => {
+    idx = 0;
+    results = new Array(cards.length).fill(null);
+    revealed = false;
+    awaitingNext = false;
+    finished = false;
+    render();
+  });
+}
+
+render();
+</script>
+</body>
+</html>
