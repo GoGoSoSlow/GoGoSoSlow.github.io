@@ -3,10 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-<title>UPS 5s and 10s</title>
+<title>UPS Pretrip Practice</title>
 <style>
   :root {
     --asphalt: #16191c;
@@ -14,18 +11,14 @@
     --panel2: #262b31;
     --line: #34393f;
     --amber: #f2a900;
-    --amber-dim: #7a5a10;
     --green: #4caf6d;
     --red: #d9534f;
     --text: #e9e7e0;
-    --text-dim: #9a9da2;
     --text-dim2: #9198a0;
     --mono: 'JetBrains Mono', 'Courier New', monospace;
   }
   * { box-sizing: border-box; }
-  html {
-    font-size: 118%; /* base scale, adjusted live via --font-scale below */
-  }
+  html { font-size: 118%; }
   html, body {
     margin: 0; padding: 0;
     background: var(--asphalt);
@@ -37,100 +30,24 @@
     background-image:
       repeating-linear-gradient(0deg, transparent, transparent 78px, rgba(242,169,0,0.035) 78px, rgba(242,169,0,0.035) 82px);
   }
-  .wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 60px; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 20px 16px 60px; }
 
   header.top {
-    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; justify-content: space-between;
     border-bottom: 2px solid var(--amber);
     padding-bottom: 12px; margin-bottom: 18px;
   }
   header.top h1 {
     font-family: var(--mono);
-    font-size: 0.82rem;
+    font-size: 0.9rem;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    margin: 0;
+    margin: 0 0 4px;
     color: var(--amber);
   }
   header.top .sub {
     font-size: 0.7rem;
     color: var(--text-dim2);
     font-family: var(--mono);
-    white-space: nowrap;
-  }
-  .font-ctrl {
-    display: flex; align-items: center; gap: 6px;
-    order: 3; width: 100%;
-  }
-  .font-ctrl .fc-label {
-    font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.08em;
-    text-transform: uppercase; color: var(--text-dim2); margin-right: 2px;
-  }
-  .font-ctrl button {
-    background: var(--panel2); border: 1px solid var(--line); color: var(--text);
-    width: 34px; height: 34px; border-radius: 4px; font-size: 1rem; cursor: pointer;
-    font-family: inherit; line-height: 1;
-  }
-  .font-ctrl button:active { background: var(--amber-dim); }
-  .font-ctrl .fc-pct {
-    font-family: var(--mono); font-size: 0.75rem; color: var(--text); min-width: 40px; text-align: center;
-  }
-  .font-ctrl .fc-reset {
-    font-family: var(--mono); font-size: 0.65rem; color: var(--text-dim2);
-    text-decoration: underline; background: none; border: none; cursor: pointer;
-    width: auto; height: auto; margin-left: 4px;
-  }
-  @media (min-width: 560px) {
-    .font-ctrl { order: 0; width: auto; }
-  }
-
-  nav.modes {
-    display: flex; flex-wrap: wrap; gap: 6px;
-    margin-bottom: 18px;
-  }
-  nav.modes button {
-    flex: 1 1 auto;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    color: var(--text-dim2);
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 10px 6px;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: all 0.15s;
-    min-width: 90px;
-  }
-  nav.modes button:hover { border-color: var(--amber-dim); color: var(--text); }
-  nav.modes button.active {
-    background: var(--amber);
-    color: #1a1400;
-    border-color: var(--amber);
-    font-weight: 700;
-  }
-
-  .scope-row {
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-    margin-bottom: 18px;
-  }
-  .scope-label {
-    font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--text-dim2);
-  }
-  .scope-toggle {
-    display: flex; gap: 4px; flex-wrap: wrap;
-    background: var(--panel); border: 1px solid var(--line); border-radius: 20px;
-    padding: 3px;
-  }
-  .scope-toggle button {
-    background: transparent; border: none; color: var(--text-dim2);
-    font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.03em;
-    padding: 7px 12px; border-radius: 16px; cursor: pointer;
-  }
-  .scope-toggle button.active {
-    background: var(--amber); color: #1a1400; font-weight: 700;
   }
 
   .card {
@@ -140,2544 +57,518 @@
     padding: 20px;
     margin-bottom: 14px;
   }
-
   .eyebrow {
     font-family: var(--mono);
     font-size: 0.65rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--amber);
-    margin-bottom: 8px;
+    margin-bottom: 12px;
   }
-
-  .flash-face {
-    min-height: 130px;
-    display: flex; flex-direction: column; justify-content: center;
-    text-align: center;
-    cursor: pointer;
-    user-select: none;
-    padding: 10px 0;
+  .pretrip-img {
+    display: block;
+    width: 100%;
+    max-height: 340px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid var(--line);
+    margin-bottom: 14px;
   }
-  .flash-title {
-    font-size: 1.25rem;
+  .section-title {
+    font-size: 1.2rem;
     font-weight: 700;
-    line-height: 1.3;
+    line-height: 1.35;
+    margin-bottom: 14px;
   }
-  .flash-hint { font-size: 0.75rem; color: var(--text-dim2); margin-top: 14px; font-family: var(--mono);}
-  .flash-back { text-align: left; }
-  .flash-back .row { margin-bottom: 12px; }
-  .flash-back .lbl {
-    font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--text-dim2); margin-bottom: 3px;
+  ul.check-list {
+    list-style: none;
+    margin: 0; padding: 0;
   }
-  .flash-back .val { line-height: 1.5; font-size: 0.95rem; }
-  .flash-back .val.key { color: var(--amber); font-weight: 700; }
+  ul.check-list li {
+    padding: 8px 0 8px 22px;
+    border-bottom: 1px solid var(--line);
+    font-size: 1rem;
+    line-height: 1.4;
+    position: relative;
+  }
+  ul.check-list li:last-child { border-bottom: none; }
+  ul.check-list li::before {
+    content: "›";
+    position: absolute; left: 0; top: 7px;
+    color: var(--amber);
+    font-weight: 700;
+  }
 
-  .btnrow { display: flex; gap: 8px; margin-top: 14px; }
+  .btnrow { display: flex; gap: 8px; margin-top: 18px; }
   .btn {
     flex: 1;
     border: none; border-radius: 4px;
-    padding: 12px; font-size: 0.85rem; font-weight: 700;
+    padding: 13px; font-size: 0.9rem; font-weight: 700;
     cursor: pointer; font-family: inherit;
-    letter-spacing: 0.02em;
   }
   .btn.primary { background: var(--amber); color: #1a1400; }
   .btn.ghost { background: var(--panel2); color: var(--text); border: 1px solid var(--line); }
   .btn.miss { background: rgba(217,83,79,0.15); color: var(--red); border: 1px solid var(--red); }
   .btn.got { background: rgba(76,175,109,0.15); color: var(--green); border: 1px solid var(--green); }
-  .btn:disabled { opacity: 0.4; cursor: default; }
 
-  textarea.answer {
-    width: 100%; min-height: 110px;
-    background: var(--asphalt); color: var(--text);
-    border: 1px solid var(--line); border-radius: 4px;
-    padding: 12px; font-size: 0.95rem; line-height: 1.5;
-    font-family: inherit; resize: vertical;
-  }
-  textarea.answer:focus { outline: none; border-color: var(--amber); }
+  .nav-row { display: flex; gap: 8px; margin-top: 14px; }
+  .nav-row .btn { font-size: 0.78rem; padding: 10px; }
 
-  .diff-line { line-height: 1.9; font-size: 0.95rem; margin-top: 4px;}
-  .sum-hint { color: var(--red); font-weight: 700; }
-  .sum-mistake { color: #5b9bd5; font-weight: 700; }
-  .type-legend {
-    font-family: var(--mono); font-size: 0.68rem; color: var(--text-dim2);
-    margin-top: 12px;
-  }
-  .type-legend .sum-hint, .type-legend .sum-mistake { font-weight: 700; }
-
-  .type-box {
-    background: var(--asphalt); border: 1px solid var(--line); border-radius: 4px;
-    padding: 12px; min-height: 110px; max-height: 260px; overflow-y: auto;
-    line-height: 1.9; font-size: 0.98rem; cursor: text;
-    -webkit-overflow-scrolling: touch;
-  }
-  .type-word {
-    cursor: pointer; border-bottom: 1px dotted transparent; padding: 0 1px;
-  }
-  .type-word:hover { border-bottom-color: var(--text-dim2); }
-  .type-word-punct { color: var(--text-dim2); padding: 0 1px; }
-  .type-input {
-    background: transparent; border: none; outline: none;
-    color: var(--text); font-family: inherit; font-size: 0.98rem;
-    border-bottom: 2px solid var(--amber); padding: 0 2px; min-width: 2ch;
-    width: auto;
-  }
-  .type-input.wrong { border-bottom-color: var(--red); background: rgba(217,83,79,0.15); color: var(--red); }
-  .type-hint-row {
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-    margin-top: 12px;
-  }
-  .type-hint-box {
-    font-family: var(--mono); font-size: 0.8rem; color: var(--text-dim2);
-    background: var(--panel2); border: 1px solid var(--line); border-radius: 4px;
-    padding: 8px 10px; flex: 1 1 auto;
-  }
-  .type-hint-box span { color: var(--amber); font-weight: 700; }
-  .type-hint-count {
-    font-family: var(--mono); font-size: 0.72rem; color: var(--text-dim2);
-    white-space: nowrap;
-  }
-  .diff-line .ok { color: var(--green); }
-  .diff-line .bad { color: var(--red); text-decoration: line-through; text-decoration-color: rgba(217,83,79,0.6); }
-  .diff-line .miss { color: var(--amber); border-bottom: 1px dotted var(--amber); }
+  .helptext { font-size: 0.82rem; color: var(--text-dim2); line-height: 1.5; }
 
   .score-badge {
     display: inline-block; font-family: var(--mono); font-weight: 700;
-    padding: 4px 10px; border-radius: 3px; font-size: 0.85rem;
+    padding: 4px 10px; border-radius: 3px; font-size: 0.9rem;
   }
-
-  .cloze-nav { display: flex; gap: 8px; margin-bottom: 14px; }
-  .cloze-nav .btn { padding: 9px 10px; font-size: 0.78rem; }
-  .cloze-divider {
-    height: 1px;
-    background: var(--line);
-    margin: 12px 0;
-    width: 100%;
-  }
-  .cloze-text { line-height: 2.1; font-size: 0.98rem; }
-  .cloze-heading {
-    color: var(--amber);
-    font-family: var(--mono);
-    font-size: 0.72rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-  .cloze-input {
-    background: var(--asphalt); border: none; border-bottom: 2px solid var(--amber);
-    color: var(--text); font-family: inherit; font-size: 0.95rem;
-    padding: 2px 4px; width: auto; min-width: 60px; text-align: center;
-  }
-  .cloze-input.correct { border-bottom-color: var(--green); color: var(--green); }
-  .cloze-input.incorrect { border-bottom-color: var(--red); color: var(--red); }
-  .cloze-input:disabled { opacity: 1; }
-
-  .cloze-check {
-    display: inline-block;
-    padding: 1px 5px;
-    border-bottom: 2px solid;
-    font-family: inherit; font-size: 0.95rem;
-    border-radius: 2px;
-  }
-  .cloze-check.ok { color: var(--green); border-bottom-color: var(--green); }
-  .cloze-check.incorrect {
-    color: var(--red); border-bottom-color: var(--red);
-    cursor: pointer;
-  }
-  .cloze-check.incorrect::after {
-    content: '↻';
-    font-size: 0.7em;
-    margin-left: 3px;
-    opacity: 0.6;
-  }
-  .cloze-check.ok.was-wrong::after {
-    content: '↻';
-    font-size: 0.7em;
-    margin-left: 3px;
-    opacity: 0.6;
-    cursor: pointer;
-  }
-
-  .order-list { list-style: none; padding: 0; margin: 0; }
-  .order-item {
+  .report-list { list-style: none; padding: 0; margin: 14px 0 0; }
+  .report-item {
     background: var(--panel2); border: 1px solid var(--line); border-radius: 4px;
-    padding: 10px 12px; margin-bottom: 6px;
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-    font-size: 0.9rem;
+    padding: 12px 14px; margin-bottom: 8px;
+    font-size: 0.88rem; line-height: 1.4;
   }
-  .order-item .num {
-    font-family: var(--mono); color: var(--amber); font-weight: 700; min-width: 22px;
+  .report-item.correct { border-color: var(--green); background: rgba(76,175,109,0.08); }
+  .report-item.incorrect { border-color: var(--red); background: rgba(217,83,79,0.08); }
+  .report-item .report-header {
+    display: flex; align-items: baseline; gap: 8px;
+    font-weight: 700; margin-bottom: 6px;
   }
-  .order-item .item-title { flex: 1 1 160px; min-width: 0; }
-  .order-item .arrows { margin-left: auto; display: flex; gap: 4px; flex-shrink: 0; }
-  .order-item .arrows button {
-    background: var(--panel); border: 1px solid var(--line); color: var(--text);
-    border-radius: 3px; width: 28px; height: 28px; cursor: pointer; font-size: 0.9rem;
-  }
-  .order-item.correct { border-color: var(--green); background: rgba(76,175,109,0.08); }
-  .order-item.incorrect { border-color: var(--red); background: rgba(217,83,79,0.08); }
+  .report-item .icon { font-weight: 700; flex-shrink: 0; }
+  .report-item ul.check-list { margin-top: 2px; }
+  .report-item ul.check-list li { padding: 5px 0 5px 20px; font-size: 0.85rem; }
 
-  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  table.progress { width: 100%; min-width: 380px; border-collapse: collapse; font-size: 0.85rem; }
-  table.progress th {
-    text-align: left; font-family: var(--mono); font-size: 0.65rem;
-    letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim2);
-    padding: 6px 4px; border-bottom: 1px solid var(--line);
-  }
-  table.progress td { padding: 8px 4px; border-bottom: 1px solid var(--line); }
-  .bar-track { background: var(--asphalt); border-radius: 3px; height: 8px; width: 100%; overflow: hidden; }
-  .bar-fill { height: 100%; background: var(--amber); }
-  .sec-label {
-    font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--text-dim2); margin: 20px 0 6px;
-  }
-
-  .helptext { font-size: 0.82rem; color: var(--text-dim2); line-height: 1.5; margin-bottom: 14px; }
-  .why-tag { font-family: var(--mono); font-size: 0.7rem; color: var(--text-dim2); margin-top: 10px;}
-  .why-tag b { color: var(--amber); }
-
-  .settings-btn {
-    background: var(--panel); border: 1px solid var(--line); color: var(--text);
-    width: 36px; height: 36px; border-radius: 4px; cursor: pointer;
-    font-size: 1.1rem; line-height: 1; flex-shrink: 0; order: 1;
-  }
-  .settings-btn:active { background: var(--amber-dim); }
-  .settings-btn.active { background: var(--amber); border-color: var(--amber); }
-  .order-mode-label {
-    font-family: var(--mono); font-size: 0.65rem; color: var(--text-dim2);
-    text-align: right; margin: -12px 0 14px;
-  }
-
-  .settings-overlay {
-    display: none;
-    position: fixed; inset: 0; z-index: 100;
-    background: rgba(0,0,0,0.6);
-    align-items: flex-start; justify-content: center;
-    padding: 40px 16px;
-    overflow-y: auto;
-  }
-  .settings-overlay.open { display: flex; }
-  .settings-panel {
-    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
-    padding: 20px; width: 100%; max-width: 440px;
-  }
-  .settings-panel-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--line);
-  }
-  .settings-panel-header h2 {
-    font-family: var(--mono); font-size: 0.9rem; letter-spacing: 0.08em;
-    text-transform: uppercase; color: var(--amber); margin: 0;
-  }
-  .settings-close {
-    background: none; border: none; color: var(--text-dim2);
-    font-size: 1.3rem; cursor: pointer; line-height: 1; padding: 2px 6px;
-  }
-  .settings-row {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line);
-  }
-  .settings-row:last-child { border-bottom: none; }
-  .settings-row .settings-row-text { flex: 1; }
-  .settings-row .settings-row-title { font-weight: 700; font-size: 0.92rem; }
-  .settings-row .settings-row-desc { font-size: 0.78rem; color: var(--text-dim2); margin-top: 2px; }
-  .settings-row .btn { flex: none; width: auto; padding: 9px 14px; font-size: 0.8rem; }
-  .settings-select {
-    background: var(--panel2); color: var(--text); border: 1px solid var(--line);
-    border-radius: 4px; padding: 8px 10px; font-family: inherit; font-size: 0.85rem;
-    flex: none; width: auto;
-  }
-
-  .switch { position: relative; display: inline-block; width: 46px; height: 26px; flex-shrink: 0; }
-  .switch input { opacity: 0; width: 0; height: 0; }
-  .switch-track {
-    position: absolute; cursor: pointer; inset: 0;
-    background: var(--panel2); border: 1px solid var(--line);
-    border-radius: 26px; transition: 0.15s;
-  }
-  .switch-track::before {
-    content: ""; position: absolute; height: 18px; width: 18px;
-    left: 3px; bottom: 3px; background: var(--text-dim2);
-    border-radius: 50%; transition: 0.15s;
-  }
-  .switch input:checked + .switch-track { background: var(--amber-dim); border-color: var(--amber); }
-  .switch input:checked + .switch-track::before { transform: translateX(20px); background: var(--amber); }
-  .settings-storage-note {
-    font-family: var(--mono); font-size: 0.65rem; color: var(--text-dim2);
-    margin-top: 14px; line-height: 1.5;
-  }
-
-  .reset-link {
-    font-family: var(--mono); font-size: 0.7rem; color: var(--text-dim2);
-    text-decoration: underline; cursor: pointer; background: none; border: none;
+  .top-actions { display:flex; gap:8px; margin-top:10px; }
+  .top-actions .btn { padding:8px 10px; font-size:0.72rem; flex:0 0 auto; }
+  .editor-section { background:var(--panel2); border:1px solid var(--line); border-radius:5px; padding:12px; margin-bottom:12px; }
+  .editor-title { font-weight:700; margin-bottom:10px; line-height:1.3; }
+  .editor-item { display:grid; grid-template-columns:1fr auto; gap:8px; align-items:start; padding:8px 0; border-top:1px solid var(--line); }
+  .editor-item:first-of-type { border-top:none; }
+  .item-text { width:100%; min-height:62px; resize:vertical; background:var(--asphalt); color:var(--text); border:1px solid var(--line); border-radius:4px; padding:9px; font:inherit; line-height:1.35; }
+  .item-actions { display:grid; grid-template-columns:repeat(2, 38px); gap:5px; }
+  .mini-btn { border:1px solid var(--line); background:var(--panel); color:var(--text); border-radius:4px; min-height:34px; cursor:pointer; font-weight:700; }
+  .mini-btn.delete { color:var(--red); border-color:rgba(217,83,79,.55); }
+  .move-row { grid-column:1 / -1; display:flex; gap:7px; align-items:center; }
+  .move-row select { flex:1; min-width:0; background:var(--asphalt); color:var(--text); border:1px solid var(--line); border-radius:4px; padding:8px; }
+  .editor-toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .editor-toolbar .btn { flex:1 1 130px; }
+  .status-note { margin:8px 0 14px; padding:9px 10px; background:var(--panel2); border:1px solid var(--line); border-radius:4px; font-size:.78rem; color:var(--text-dim2); }
+  .add-item { width:100%; margin-top:8px; }
+  .file-input { display:none; }
+  @media (max-width:480px) {
+    .editor-item { grid-template-columns:1fr; }
+    .item-actions { grid-template-columns:repeat(4, 1fr); }
+    .move-row { grid-column:auto; }
   }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="top">
-    <h1>UPS 5s and 10s</h1>
-    <div class="sub" id="streakDisplay">loading…</div>
-    <button class="settings-btn" id="orderModeBtn" aria-label="Toggle item order mode" title="Item order: mastery">🎲</button>
-    <button class="settings-btn" id="settingsBtn" aria-label="Settings">⚙</button>
-    <div class="font-ctrl">
-      <span class="fc-label">Text size</span>
-      <button id="fcMinus" aria-label="Decrease text size">A−</button>
-      <span class="fc-pct" id="fcPct">100%</span>
-      <button id="fcPlus" aria-label="Increase text size">A+</button>
-      <button class="fc-reset" id="fcReset">reset</button>
-    </div>
+    <h1>UPS Pretrip Practice</h1>
+    <div class="sub" id="progressLabel">loading…</div>
+    <div class="top-actions"><button class="btn ghost" id="btnEditMode">Edit checklist</button></div>
   </header>
-  <div class="order-mode-label" id="orderModeLabel"></div>
-
-  <div class="settings-overlay" id="settingsOverlay">
-    <div class="settings-panel">
-      <div class="settings-panel-header">
-        <h2>Settings</h2>
-        <button class="settings-close" id="settingsClose" aria-label="Close settings">&times;</button>
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-text">
-          <div class="settings-row-title">Blank the title too</div>
-          <div class="settings-row-desc">In fill-in exercises, also blank out the habit/point name (e.g. "Aim High In Steering"), not just the body text.</div>
-        </div>
-        <label class="switch">
-          <input type="checkbox" id="settingsBlankTitles">
-          <span class="switch-track"></span>
-        </label>
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-text">
-          <div class="settings-row-title">Hide question prompts</div>
-          <div class="settings-row-desc">Hides "How do you do it?", "What does it do for you?", "Key Phrase" and "Why?" everywhere in the app — just the answers, no labels.</div>
-        </div>
-        <label class="switch">
-          <input type="checkbox" id="settingsHidePrompts">
-          <span class="switch-track"></span>
-        </label>
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-text">
-          <div class="settings-row-title">Split long sentences</div>
-          <div class="settings-row-desc">In Verbal Practice, breaks a handful of the 10 Point Commentary's longer sentences into two shorter chunks at a natural pause, so they're easier to memorize and link together.</div>
-        </div>
-        <label class="switch">
-          <input type="checkbox" id="settingsSplitSentences">
-          <span class="switch-track"></span>
-        </label>
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-text">
-          <div class="settings-row-title">Type the titles too</div>
-          <div class="settings-row-desc">In Type it out, also require typing the habit/point name (e.g. "Clearing Intersections"), not just the body text.</div>
-        </div>
-        <label class="switch">
-          <input type="checkbox" id="settingsTypeTitles">
-          <span class="switch-track"></span>
-        </label>
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-text">
-          <div class="settings-row-title">5s mastery speed</div>
-          <div class="settings-row-desc">How many correct reps in a row before a habit's mastery level goes up. Higher = slower, more repetition needed.</div>
-        </div>
-        <select class="settings-select" id="settingsMasterySpeedHabits">
-          <option value="1">1 (fast)</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5 (slow)</option>
-        </select>
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-text">
-          <div class="settings-row-title">10s mastery speed</div>
-          <div class="settings-row-desc">Same, but for the 10 Point Commentary. Since there's more to each point, a higher number here can feel more honest than the default.</div>
-        </div>
-        <select class="settings-select" id="settingsMasterySpeedPoints">
-          <option value="1">1 (fast)</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5 (slow)</option>
-        </select>
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-text">
-          <div class="settings-row-title">10s summary mode</div>
-          <div class="settings-row-desc">Swaps the body of each 10 Point Commentary item for a shorter, easier-to-memorize version. The title and Why? stay exactly as written.</div>
-        </div>
-        <label class="switch">
-          <input type="checkbox" id="settingsTenSummaryMode">
-          <span class="switch-track"></span>
-        </label>
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-text">
-          <div class="settings-row-title">Edit 10s summaries</div>
-          <div class="settings-row-desc">Rewrite any of the 10 summaries in your own words. Your edits are kept even if summary mode is off.</div>
-        </div>
-        <button class="btn ghost" id="settingsEditSummaries">Edit</button>
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-text">
-          <div class="settings-row-title">Backup &amp; restore</div>
-          <div class="settings-row-desc">Export all your progress, custom summaries, and settings to a file — or import one back in, e.g. after switching browsers or devices.</div>
-        </div>
-        <button class="btn ghost" id="settingsBackupRestore">Open</button>
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-text">
-          <div class="settings-row-title">Reset progress</div>
-          <div class="settings-row-desc">Clears mastery levels for every habit and point. Text size and quiz scope are kept.</div>
-        </div>
-        <button class="btn miss" id="settingsResetProgress">Reset</button>
-      </div>
-      <div class="settings-storage-note" id="storageNote"></div>
-      <div class="settings-storage-note" style="margin-top:4px;">Build: 2026-08-06 · v25 (10s summary mode + editor, backup/restore)</div>
-    </div>
-  </div>
-
-  <div class="settings-overlay" id="summaryEditOverlay">
-    <div class="settings-panel" style="max-width:560px;">
-      <div class="settings-panel-header">
-        <h2>Edit 10s Summaries</h2>
-        <button class="settings-close" id="summaryEditClose" aria-label="Close">&times;</button>
-      </div>
-      <div class="helptext" style="margin-top:0; margin-bottom:14px;">Rewrite any point's summary in your own words. Leave a box empty (or click Reset) to fall back to the built-in default.</div>
-      <div id="summaryEditList"></div>
-      <div class="btnrow" style="margin-top:16px;">
-        <button class="btn ghost" id="summaryEditCancel">Cancel</button>
-        <button class="btn primary" id="summaryEditSave">Save</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="settings-overlay" id="backupOverlay">
-    <div class="settings-panel" style="max-width:560px;">
-      <div class="settings-panel-header">
-        <h2>Backup &amp; Restore</h2>
-        <button class="settings-close" id="backupClose" aria-label="Close">&times;</button>
-      </div>
-      <div class="sec-label" style="margin-top:0;">Export</div>
-      <div class="helptext" style="margin-top:0;">Saves your progress, mastery levels, custom summaries, and settings.</div>
-      <div class="btnrow">
-        <button class="btn ghost" id="backupCopy">Copy to clipboard</button>
-        <button class="btn primary" id="backupDownload">Download file</button>
-      </div>
-      <textarea class="answer" id="backupExportText" readonly style="margin-top:10px; min-height:80px; font-size:0.72rem;"></textarea>
-
-      <div class="sec-label">Import</div>
-      <div class="helptext" style="margin-top:0;">Choose a previously exported file, or paste its contents below.</div>
-      <input type="file" id="backupFileInput" accept="application/json" style="margin-bottom:10px;">
-      <textarea class="answer" id="backupImportText" placeholder="Paste exported JSON here…" style="min-height:80px; font-size:0.72rem;"></textarea>
-      <div class="btnrow" style="margin-top:10px;">
-        <button class="btn primary" id="backupImportBtn">Import</button>
-      </div>
-      <div class="why-tag" id="backupStatus" style="margin-top:10px;"></div>
-    </div>
-  </div>
-
-  <nav class="modes">
-    <button data-mode="flash" class="active">Flashcards</button>
-    <button data-mode="cloze">Fill-in</button>
-    <button data-mode="type">Type it out</button>
-    <button data-mode="qtype">Quick Type</button>
-    <button data-mode="order">Quick Recall</button>
-    <button data-mode="verbal">Verbal Practice</button>
-    <button data-mode="progress">Progress</button>
-  </nav>
-
-  <div class="scope-row">
-    <span class="scope-label">Quiz on</span>
-    <div class="scope-toggle" id="scopeToggle">
-      <button data-scope="habits">5 Seeing Habits</button>
-      <button data-scope="points">10 Point Commentary</button>
-      <button data-scope="both" class="active">Both</button>
-    </div>
-  </div>
-
   <div id="app"></div>
 </div>
 
 <script>
 // ---------- DATA ----------
-const fiveHabits = [
-  { id: "h0", name: "AIM HIGH IN STEERING",
-    how: "Imaginary target – baseball/dartboard",
-    what: "Centers car in traffic lane: Safe path on turns",
-    key: "FIND A SAFE PATH WELL AHEAD." },
-  { id: "h1", name: "GET THE BIG PICTURE",
-    how: "How wide and deep? What's in it? Objects and ground.",
-    what: "Keeps you away from billboards. Smooth stops and turns. Buys time",
-    key: "STAY BACK AND SEE IT ALL" },
-  { id: "h2", name: "KEEP YOUR EYES MOVING",
-    how: "Move eyes. Front – 2 seconds, Rear – 5 to 8 seconds",
-    what: "Keeps you alive at intersections, keeps eyes ahead of car",
-    key: "SCAN – DON'T STARE" },
-  { id: "h3", name: "LEAVE YOURSELF AN OUT",
-    how: "Have escape route, take path of least resistance.",
-    what: "Space on all four sides, but always in front",
-    key: "BE PREPARED, EXPECT THE UNEXPECTED" },
-  { id: "h4", name: "MAKE SURE THEY SEE YOU",
-    how: "Communicate in traffic – horn, lights, signals",
-    what: "Establishes eye-to-eye contact",
-    key: "DON'T GAMBLE – USE YOUR HORN, LIGHTS, AND SIGNALS" }
+// Each card is one physical location/process from the pretrip. Sections are always
+// worked in strict sequence — this is a fixed walk-around, not something to randomize.
+const defaultCards = [
+  { title: "Approach vehicle", items: [
+    "No Pooling Liquids",
+    "Check Oil & Water"
+  ]},
+  { title: "Get in passenger side, 3 pts contact", items: [
+    "Hazard Triangles",
+    "Hazmat Papers",
+    "Hazmat Book",
+    "Hazmat Sticker",
+    "Charged Fire Extinguisher",
+    "Check DVIR"
+  ]},
+  { title: "Sit in driver seat", items: [
+    "Glass is Clean, not Cracked or Broken",
+    "Mirrors Adjusted",
+    "(Turn On Headlights) Low Beams, High Beams, (Turn On) 4-Way Flashers"
+  ]},
+  { title: "Get out, 3 pts contact", items: [
+    "Check steering wheel for Excessive Play",
+    "(Start at the Top) Mirror Bracket",
+    "Vehicle Number",
+    "Side Marker Light",
+    "Hood Latch",
+    "Front Tire Check (4/32 tread, pressure, cuts, lugs, stem/caps)"
+  ]},
+  { title: "Move around front, starting at top", items: [
+    "Clearance Lights",
+    "Vehicle Number",
+    "Blinker Light & Lens, Headlight & Lens",
+    "Bumper",
+    "Headlight & Lens, Blinker Light & Lens"
+  ]},
+  { title: "Move to passenger front", items: [
+    "Mirror Bracket",
+    "Hood Latch",
+    "Side Marker Light",
+    "Vehicle Number",
+    "Front Tire Check (4/32 tread, pressure, cuts, lugs, stem/caps)"
+  ]},
+  { title: "Passenger door", items: [
+    "(Check and close Side Door) Glass Clean, not Cracked or Broken (Latch Open)"
+  ]},
+  { title: "Z-scan passenger side", items: [
+    "No Cuts or Scratches Down to Bare Metal",
+    "DOT Number (Bottom Right)",
+    "Rear Tire Check (2/32 tread, pressure, cuts, lugs, stem/caps)",
+    "Rear Marker Light (or Reflective Sticker or Both — Bottom Left Corner)"
+  ]},
+  { title: "Move to rear, start at top", items: [
+    "Rear Marker Lights",
+    "Camera Lens Adjusted & Not Cracked",
+    "Vehicle Number (Top Left)",
+    "No Cuts or Scratches Down to Bare Metal",
+    "(Open Rear Door) Check Cables (Close Rear Door)",
+    "(Step Back, Point to Both) Brake Lights & Lenses, Reverse Light Lenses",
+    "License Plate & Light (Hold Hand Under Light), Rear Bumper"
+  ]},
+  { title: "Move to driver's side, Z-scan", items: [
+    "(Side Wall Check) No Cuts or Scratches Down to Bare Metal",
+    "Rear Tire Check (2/32 tread, pressure, cuts, lugs, stem/caps)",
+    "Gas Cap (Twist to Tighten)",
+    "DOT Number (Bottom Left)",
+    "Rear Marker Light (or Reflective Sticker or Both — Bottom Right Corner)"
+  ]},
+  { title: "Driver's door check", items: [
+    "(Pull Side Door) Glass Clean, not Cracked or Broken (Latch Open)"
+  ]},
+  { title: "Enter driver's door, 3 pts of contact, push fob once", items: [
+    "Push Engine Start ONCE",
+    "Buckle Seatbelt",
+    "Foot on Brake, Start Vehicle",
+    "Listen for Unusual Engine Noise (Keep Foot on Brake)",
+    "Turn Off Headlights & 4-Way Flashers"
+  ]},
+  { title: "Cab Z-scan", items: [
+    "Clearance Sticker, Rear Monitor Audio & Video Adjusted",
+    "(Point to Gauges) Oil Pressure, Amp Meter, Speedometer, Water Temp, Fuel — working and reading normal",
+    "Tap Horn",
+    "Check Blinkers & Listen for Clicking"
+  ]},
+  { title: "Final step", items: [
+    "Ebrake Test — shouldn't Move",
+    "Regular Brake Test",
+    "Check Reverse & Brake Lights Using the Buddy System or a Reflective Surface",
+    "Log anything wrong in the DVIR"
+  ]}
 ];
 
-const tenPoints = [
-  { id: "p0", title: "Clearing intersections", why: "Keeps you alive at intersections.",
-    text: "Whether approaching, turning, going through, or starting up at intersections scan ahead, look left, right, then back to the left. Scan your driving scene getting the big picture and look left, right, first, looking for any pedestrians, bicycles, motorcycles, and vehicles to ensure they are obeying their traffic sign or signal, and looking for any obstructions that may block your visibility. Look left the second time because that's the first lane of traffic I'm going to enter. Prior to entering the intersection, I check my traffic side mirror looking for traffic in the lane next to my vehicle that may turn in front of me. As I proceed through the intersection I check my opposite traffic side mirror to ensure I cleared the intersection of any hazards." },
-  { id: "p1", title: "When stopped in traffic", why: "Have escape route.",
-    text: "When stopped in traffic, I leave enough space between the front bumper of my vehicle and the rear bumper of the vehicle in front of me. If that vehicle stalls or becomes disabled, I can maneuver around that vehicle without having to back up in traffic. The space I leave in front of my vehicle is proportionate to the size of my vehicle. The longer my vehicle, the more space required." },
-  { id: "p2", title: "Count one-two-three after vehicle ahead has started to move", why: "Keeps you away from billboards.",
-    text: "Count one, two, three after the vehicle ahead has started to move before placing my vehicle in motion. This will automatically establish a space cushion and allow me to bring my eyes up to the driving scene ahead." },
-  { id: "p3", title: "Four to six second following time for speeds up to 30 MPH, 6-8 seconds for speeds over 30 MPH", why: "Buys time.",
-    text: "To calculate following distance- When the vehicle ahead passes a stationary item, start counting 1/1000 one, 1/1000 two, 1/1000 three until the front bumper of my vehicle reaches that item. This is my following distance in seconds and gives me time to act to any changes in the traffic scene ahead." },
-  { id: "p4", title: "Eight to twelve seconds eye-lead time", why: "Centers car in traffic lane.",
-    text: "Eight to twelve seconds of eye lead time is the depth of which my eyes should be most of the time while driving. To establish eye lead time while driving, I pick a stationary item in front of my vehicle and start counting 1/1000 one, 1/1000 two, 1/1000 three until the front of my vehicle reaches that item. That is my eye lead time in seconds. Remember that it is a maintained depth of vision." },
-  { id: "p5", title: "Scan steering wheels", why: "Take path of least resistance.",
-    text: "Always scan steering wheels of parked cars to see if the vehicle is occupied. An occupied vehicle presents two hazards, the person may either exit the vehicle, or pull away from the curb. Other ways to see if the vehicle is occupied is steering wheels turned out, tail or brake lights on, and exhaust coming from the tail pipe. If you can't determine if the vehicle is occupied, treat it as an occupied vehicle. A small tap or loud blast if necessary, close enough to be heard, yet far enough away to take evasive action." },
-  { id: "p6", title: "Stale green lights", why: "Smooth stops and turns.",
-    text: "A stale green light is a light that I did not see change, and I'm not sure when it may turn to yellow or red. A point of decision must be established between the front bumper of my vehicle and the stop line. If the light would change before reaching my decision point I will be able to bring the vehicle to a safe stop behind the stop line. If I reach my decision point and the light would change, I will continue through the intersection without hesitation or acceleration. Things that affect my point of decision are road, load, weather and speed." },
-  { id: "p7", title: "Eye contact", why: "Establishes eye to eye contact.",
-    text: "Always establish eye to eye contact with pedestrians, bicycles, motorcycles, and vehicles to eliminate uncertainty. We use 3 tools to establish eye to eye contact, our horn, lights and signals. Our horn is the primary tool, usually a tap of the horn, sometimes a loud blast is necessary. Once I establish eye to eye contact I can expect the other person to act in a reasonable and predictable manner." },
-  { id: "p8", title: "Pulling from curb", why: "Communicate in traffic, horn, lights, signals.",
-    text: "When pulling from a curb, I always indicate my intentions by turning on my traffic side turn signal. I check traffic by, looking at my traffic side flat and convex mirrors. I look over my traffic side shoulder to check my blind spot between the fuel tank and drive axle in the lane I'm about to occupy. When the lane is clear I can proceed with pulling from curb. I do not deactivate my turn signal until all of my equipment is completely in the lane I am occupying." },
-  { id: "p9", title: "Use of mirrors and gauges", why: "Keeps eyes ahead of car.",
-    text: "I check a mirror every 5 to 8 seconds looking for lane position, traffic conditions and mechanical problems. I substitute a mirror check, when traffic allows, with one of my primary gauges, oil or water looking for normal readings. When I check a mirror or gauge my next eye movement is back to the front. Never go mirror to mirror, gauge to gauge, mirror to gauge, gauge to mirror." }
-];
+const STORAGE_KEY = 'upsPretripCustomItemsV1';
+let cards = loadCards();
 
-const allItemIds = [...fiveHabits.map(h=>h.id), ...tenPoints.map(p=>p.id)];
+function cloneDefaults() {
+  return defaultCards.map(c => ({ title: c.title, items: [...c.items] }));
+}
 
-// Default short-form summaries for "10s summary mode" — the title and Why? stay exactly as
-// written on the sheet; only the body gets swapped for this shorter, easier-to-hold version.
-// The person can override any of these in Settings, which is stored separately (see
-// tenSummaryCustom) so these defaults are never lost even after editing.
-const TEN_SUMMARIES_DEFAULT = {
-  p0: "Whether approaching, turning, going through or starting up at intersections look left, right first.  Check for pedestrians, bicycles, motorcycles and vehicles to ensure they are obeying traffic rules.  Look for any billboards.  Look left last because that's the first lane of traffic I'm going to enter.  Prior to entering the intersection, I check my traffic side mirror for vehicles that may turn in front of me.  I check my opposite mirror as I proceed to ensure I cleared the intersection of hazards.",
-  p1: "When stopped in traffic, I leave enough space between my vehicle and the vehicle in front of me in case the vehicle becomes disabled.  The longer my vehicle the more space required.",
-  p2: "This automatically establishes a space cushion and allows me to bring my eyes up to the driving scene ahead.",
-  p3: "Gives me time to react to the traffic scene ahead.  Count from when the vehicle ahead passes a stationary object, until my front bumper reaches it.",
-  p4: "It's the depth of which my eyes should be most of the time while driving.  Choose stationary object and count until my front bumper reaches it.",
-  p5: "Scan steering wheels to determine if vehicles are occupied, treat unknown as occupied.  2 hazards, they may exit the vehicle or pull away from the curb.  Other signs are steering wheels turned out, tail or brake lights on, and exhaust coming from tailpipe.  Use horn if necessary, close enough to be heard, yet far enough away to take evasive action.",
-  p6: "A stale green light is one I didn't see change and I don't know when it will change.  Choose a point of decision that will allow me to make a safe stop behind the stop line.  If I reach my point of decision, I will continue without hesitation or acceleration.  Things that affect my point of decision are road, load, weather and speed.",
-  p7: "Always establish eye to eye contact with pedestrians, bicycles, motorcycles and vehicles, using horn, lights and signals. Horn is my primary tool.",
-  p8: "When pulling from curb, first use turn signal.  Next, check traffic side flat and convex mirrors.  Then check blind spot by looking over shoulder.  When clear pull away, but don't deactivate turn signal until fully in lane.",
-  p9: "Check mirror every 5-8 seconds for lane position, traffic conditions, and mechanical problems. Substitute a gauge check when traffic allows. Never go mirror to mirror or gauge to mirror."
-};
-
-// Manual break points for Verbal Practice's "Split long sentences" setting. Auto-splitting on
-// punctuation alone doesn't catch these — they're long single sentences with a natural seam
-// (usually a comma joining two complete thoughts) that's easier to memorize as two chunks.
-// Keys must match splitSentences() output for that point's text exactly (trimmed).
-const VERBAL_SENTENCE_SPLITS = {
-  p0: {
-    "Scan your driving scene getting the big picture and look left, right, first, looking for any pedestrians, bicycles, motorcycles, and vehicles to ensure they are obeying their traffic sign or signal, and looking for any obstructions that may block your visibility.":
-      ["Scan your driving scene getting the big picture and look left, right, first, looking for any pedestrians, bicycles, motorcycles, and vehicles to ensure they are obeying their traffic sign or signal,",
-       "and looking for any obstructions that may block your visibility."]
-  },
-  p3: {
-    "To calculate following distance- When the vehicle ahead passes a stationary item, start counting 1/1000 one, 1/1000 two, 1/1000 three until the front bumper of my vehicle reaches that item.":
-      ["To calculate following distance- When the vehicle ahead passes a stationary item,",
-       "start counting 1/1000 one, 1/1000 two, 1/1000 three until the front bumper of my vehicle reaches that item."]
-  },
-  p4: {
-    "To establish eye lead time while driving, I pick a stationary item in front of my vehicle and start counting 1/1000 one, 1/1000 two, 1/1000 three until the front of my vehicle reaches that item.":
-      ["To establish eye lead time while driving, I pick a stationary item in front of my vehicle",
-       "and start counting 1/1000 one, 1/1000 two, 1/1000 three until the front of my vehicle reaches that item."]
-  },
-  p5: {
-    "Other ways to see if the vehicle is occupied is steering wheels turned out, tail or brake lights on, and exhaust coming from the tail pipe.":
-      ["Other ways to see if the vehicle is occupied is steering wheels turned out,",
-       "tail or brake lights on, and exhaust coming from the tail pipe."]
-  },
-  p6: {
-    "A stale green light is a light that I did not see change, and I'm not sure when it may turn to yellow or red.":
-      ["A stale green light is a light that I did not see change,",
-       "and I'm not sure when it may turn to yellow or red."]
-  },
-  p8: {
-    "I look over my traffic side shoulder to check my blind spot between the fuel tank and drive axle in the lane I'm about to occupy.":
-      ["I look over my traffic side shoulder to check my blind spot",
-       "between the fuel tank and drive axle in the lane I'm about to occupy."]
-  }
-};
-
-// ---------- STORAGE ADAPTER ----------
-// Uses window.storage when running inside Claude's artifact viewer.
-// Falls back to localStorage automatically when hosted anywhere else
-// (e.g. GitHub Pages), so the same file works in both places.
-const Store = (function() {
-  const hasClaudeStorage = typeof window !== 'undefined'
-    && window.storage
-    && typeof window.storage.get === 'function'
-    && typeof window.storage.set === 'function';
-
-  async function get(key) {
-    if (hasClaudeStorage) {
-      try {
-        const res = await window.storage.get(key, false);
-        return res ? res.value : null;
-      } catch (e) { return null; }
-    }
-    try { return localStorage.getItem(key); } catch (e) { return null; }
-  }
-
-  async function set(key, value) {
-    if (hasClaudeStorage) {
-      try { await window.storage.set(key, value, false); return true; } catch (e) { return false; }
-    }
-    try { localStorage.setItem(key, value); return true; } catch (e) { return false; }
-  }
-
-  async function remove(key) {
-    if (hasClaudeStorage) {
-      try { await window.storage.delete(key, false); return true; } catch (e) { return false; }
-    }
-    try { localStorage.removeItem(key); return true; } catch (e) { return false; }
-  }
-
-  return { get, set, remove, backend: hasClaudeStorage ? 'claude' : 'local' };
-})();
-
-// ---------- QUIZ SCOPE ----------
-let quizScope = 'both'; // 'habits' | 'points' | 'both'
-
-async function loadScope() {
+function loadCards() {
   try {
-    const val = await Store.get('quiz-scope');
-    if (val && ['habits','points','both'].includes(val)) quizScope = val;
-  } catch (e) { /* default stays */ }
-  document.querySelectorAll('.scope-toggle button').forEach(b => {
-    b.classList.toggle('active', b.dataset.scope === quizScope);
-  });
-}
-
-async function saveScope() {
-  await Store.set('quiz-scope', quizScope);
-}
-
-// ---------- BLANK-THE-TITLE SETTING ----------
-let blankTitles = false;
-
-async function loadBlankTitles() {
-  try {
-    const val = await Store.get('blank-titles');
-    blankTitles = val === 'true';
-  } catch (e) { blankTitles = false; }
-  const toggle = document.getElementById('settingsBlankTitles');
-  if (toggle) toggle.checked = blankTitles;
-}
-
-async function saveBlankTitles() {
-  await Store.set('blank-titles', String(blankTitles));
-}
-
-// ---------- HIDE QUESTION PROMPTS SETTING ----------
-let hidePrompts = false;
-
-async function loadHidePrompts() {
-  try {
-    const val = await Store.get('hide-prompts');
-    hidePrompts = val === 'true';
-  } catch (e) { hidePrompts = false; }
-  const toggle = document.getElementById('settingsHidePrompts');
-  if (toggle) toggle.checked = hidePrompts;
-}
-
-async function saveHidePrompts() {
-  await Store.set('hide-prompts', String(hidePrompts));
-}
-
-// ---------- 10s SUMMARY MODE ----------
-let tenSummaryMode = false;
-let tenSummaryCustom = {}; // point id -> custom summary text (only set for edited points)
-
-async function loadTenSummaryMode() {
-  try {
-    const val = await Store.get('ten-summary-mode');
-    tenSummaryMode = val === 'true';
-  } catch (e) { tenSummaryMode = false; }
-  const toggle = document.getElementById('settingsTenSummaryMode');
-  if (toggle) toggle.checked = tenSummaryMode;
-}
-async function saveTenSummaryMode() {
-  await Store.set('ten-summary-mode', String(tenSummaryMode));
-}
-
-async function loadTenSummaryCustom() {
-  try {
-    const val = await Store.get('ten-summary-custom');
-    tenSummaryCustom = val ? JSON.parse(val) : {};
-  } catch (e) { tenSummaryCustom = {}; }
-}
-async function saveTenSummaryCustom() {
-  await Store.set('ten-summary-custom', JSON.stringify(tenSummaryCustom));
-}
-
-// The effective body text for a 10-point item — original verbatim text, or (when summary
-// mode is on) the custom edit if there is one, else the built-in default summary. Title and
-// Why? are untouched by this everywhere they're used.
-function getPointBodyText(p) {
-  if (!tenSummaryMode) return p.text;
-  if (tenSummaryCustom[p.id] !== undefined && tenSummaryCustom[p.id] !== null && tenSummaryCustom[p.id] !== '') {
-    return tenSummaryCustom[p.id];
-  }
-  return TEN_SUMMARIES_DEFAULT[p.id] || p.text;
-}
-
-// ---------- VERBAL PRACTICE: SPLIT LONG SENTENCES SETTING ----------
-let splitLongSentences = true;
-
-async function loadSplitLongSentences() {
-  try {
-    const val = await Store.get('split-long-sentences');
-    if (val !== null) splitLongSentences = val === 'true';
-  } catch (e) { /* default stays */ }
-  const toggle = document.getElementById('settingsSplitSentences');
-  if (toggle) toggle.checked = splitLongSentences;
-}
-
-async function saveSplitLongSentences() {
-  await Store.set('split-long-sentences', String(splitLongSentences));
-}
-
-// ---------- TYPE-IT-OUT: INCLUDE TITLES SETTING ----------
-let typeIncludeTitles = false;
-
-async function loadTypeIncludeTitles() {
-  try {
-    const val = await Store.get('type-include-titles');
-    typeIncludeTitles = val === 'true';
-  } catch (e) { typeIncludeTitles = false; }
-  const toggle = document.getElementById('settingsTypeTitles');
-  if (toggle) toggle.checked = typeIncludeTitles;
-}
-
-async function saveTypeIncludeTitles() {
-  await Store.set('type-include-titles', String(typeIncludeTitles));
-}
-
-// ---------- ITEM ORDER MODE (global, applies to Flashcards / Fill-in / Type it out) ----------
-// 'mastery' = weighted random favoring weaker items (default, spaced-repetition style)
-// 'sequential' = strict sheet order, 1 through 5 / 1 through 10
-let itemOrderMode = 'mastery';
-
-function updateOrderModeButton() {
-  const btn = document.getElementById('orderModeBtn');
-  const label = document.getElementById('orderModeLabel');
-  if (btn) {
-    btn.title = `Item order: ${itemOrderMode}`;
-    btn.classList.toggle('active', itemOrderMode === 'sequential');
-  }
-  if (label) {
-    label.textContent = itemOrderMode === 'sequential' ? 'Order: in order (1, 2, 3…)' : 'Order: mastery (weighted random)';
-  }
-}
-
-async function loadItemOrderMode() {
-  try {
-    const val = await Store.get('item-order-mode');
-    if (val === 'sequential' || val === 'mastery') itemOrderMode = val;
-  } catch (e) { /* default stays */ }
-  updateOrderModeButton();
-}
-
-async function saveItemOrderMode() {
-  await Store.set('item-order-mode', itemOrderMode);
-}
-
-document.getElementById('orderModeBtn').addEventListener('click', () => {
-  itemOrderMode = itemOrderMode === 'sequential' ? 'mastery' : 'sequential';
-  updateOrderModeButton();
-  saveItemOrderMode();
-  // force each mode to pick a fresh item under the new mode next time it's shown
-  flashItem = null;
-  clozeItem = null;
-  typeItem = null;
-  qtItem = null;
-  render();
-});
-
-document.querySelectorAll('.scope-toggle button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    quizScope = btn.dataset.scope;
-    document.querySelectorAll('.scope-toggle button').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    saveScope();
-    // reset per-mode "current item" state so the new scope takes effect immediately
-    flashItem = null;
-    clozeItem = null;
-    typeItem = null;
-    qtItem = null;
-    recallSteps = [];
-    verbalSteps = [];
-    render();
-  });
-});
-
-function scopedHabits() { return (quizScope === 'points') ? [] : fiveHabits; }
-function scopedPoints() { return (quizScope === 'habits') ? [] : tenPoints; }
-
-// ---------- FONT SIZE ----------
-let fontScale = 1.0; // multiplier on top of the 118% base set in CSS
-const FONT_MIN = 0.7, FONT_MAX = 1.8, FONT_STEP = 0.1;
-
-function applyFontScale() {
-  document.documentElement.style.fontSize = (118 * fontScale) + '%';
-  document.getElementById('fcPct').textContent = Math.round(fontScale * 100) + '%';
-}
-
-async function loadFontScale() {
-  try {
-    const val = await Store.get('font-scale');
-    if (val) {
-      const v = parseFloat(val);
-      if (!isNaN(v) && v >= FONT_MIN && v <= FONT_MAX) fontScale = v;
-    }
-  } catch (e) { /* default stays */ }
-  applyFontScale();
-}
-
-async function saveFontScale() {
-  await Store.set('font-scale', String(fontScale));
-}
-
-document.getElementById('fcMinus').addEventListener('click', () => {
-  fontScale = Math.max(FONT_MIN, Math.round((fontScale - FONT_STEP) * 10) / 10);
-  applyFontScale(); saveFontScale();
-});
-document.getElementById('fcPlus').addEventListener('click', () => {
-  fontScale = Math.min(FONT_MAX, Math.round((fontScale + FONT_STEP) * 10) / 10);
-  applyFontScale(); saveFontScale();
-});
-document.getElementById('fcReset').addEventListener('click', () => {
-  fontScale = 1.0;
-  applyFontScale(); saveFontScale();
-});
-
-// ---------- STORAGE / MASTERY ----------
-let mastery = {}; // id -> {level: 0-5, seen: n, correct: n, streak: n}
-let storageReady = false;
-
-function defaultMastery() {
-  const m = {};
-  allItemIds.forEach(id => m[id] = { level: 0, seen: 0, correct: 0, streak: 0 });
-  return m;
-}
-
-async function loadMastery() {
-  try {
-    const val = await Store.get('mastery-data');
-    if (val) {
-      const parsed = JSON.parse(val);
-      mastery = defaultMastery();
-      // Merge rather than overwrite, so older saved data missing newer fields (like streak)
-      // doesn't leave them undefined.
-      Object.keys(parsed).forEach(k => { if (mastery[k]) mastery[k] = Object.assign({}, mastery[k], parsed[k]); });
-    } else {
-      mastery = defaultMastery();
-    }
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return cloneDefaults();
+    const saved = JSON.parse(raw);
+    if (!isValidImport(saved)) return cloneDefaults();
+    return saved.sections.map((s, i) => ({ title: defaultCards[i].title, items: [...s.items] }));
   } catch (e) {
-    mastery = defaultMastery();
+    return cloneDefaults();
   }
-  storageReady = true;
-  updateStreakDisplay();
 }
 
-async function saveMastery() {
-  await Store.set('mastery-data', JSON.stringify(mastery));
+function saveCards() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(exportPayload()));
 }
 
-// How many correct reps in a row are needed before an item's mastery level advances.
-// Configurable separately for the 5s and 10s in Settings — default 1 matches the
-// original (fast) behavior, so nothing changes unless the person turns it up.
-let masterySpeedHabits = 1;
-let masterySpeedPoints = 1;
-const MASTERY_SPEED_MIN = 1, MASTERY_SPEED_MAX = 5;
-
-async function loadMasterySpeed() {
-  try {
-    const h = await Store.get('mastery-speed-habits');
-    const p = await Store.get('mastery-speed-points');
-    const hNum = parseInt(h);
-    const pNum = parseInt(p);
-    if (hNum >= MASTERY_SPEED_MIN && hNum <= MASTERY_SPEED_MAX) masterySpeedHabits = hNum;
-    if (pNum >= MASTERY_SPEED_MIN && pNum <= MASTERY_SPEED_MAX) masterySpeedPoints = pNum;
-  } catch (e) { /* defaults stay */ }
-  const selH = document.getElementById('settingsMasterySpeedHabits');
-  const selP = document.getElementById('settingsMasterySpeedPoints');
-  if (selH) selH.value = String(masterySpeedHabits);
-  if (selP) selP.value = String(masterySpeedPoints);
+function exportPayload() {
+  return {
+    format: 'ups-pretrip-items',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    sections: cards.map(c => ({ title: c.title, items: [...c.items] }))
+  };
 }
 
-async function saveMasterySpeed() {
-  await Store.set('mastery-speed-habits', String(masterySpeedHabits));
-  await Store.set('mastery-speed-points', String(masterySpeedPoints));
+function isValidImport(data) {
+  return !!data && data.format === 'ups-pretrip-items' && data.version === 1 &&
+    Array.isArray(data.sections) && data.sections.length === defaultCards.length &&
+    data.sections.every((s, i) => s && s.title === defaultCards[i].title && Array.isArray(s.items) &&
+      s.items.every(x => typeof x === 'string'));
 }
 
-function bumpMastery(id, correct) {
-  const m = mastery[id];
-  if (!m) return;
-  m.seen++;
-  if (correct) {
-    m.correct++;
-    m.streak = (m.streak || 0) + 1;
-    const required = id.startsWith('h') ? masterySpeedHabits : masterySpeedPoints;
-    if (m.streak >= required) {
-      m.level = Math.min(5, m.level + 1);
-      m.streak = 0;
-    }
-  } else {
-    m.level = Math.max(0, m.level - 2);
-    m.streak = 0;
-  }
-  saveMastery();
-  updateStreakDisplay();
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
 
-function updateStreakDisplay() {
-  const total = allItemIds.length;
-  const mastered = allItemIds.filter(id => mastery[id] && mastery[id].level >= 4).length;
-  document.getElementById('streakDisplay').textContent = `${mastered}/${total} mastered`;
-}
+// ---------- STATE ----------
+let idx = 0;
+let results = new Array(cards.length).fill(null);
+let revealed = false;   // whether the text card is shown for the current section yet
+let awaitingNext = false;
+let finished = false;
+let editing = false;
 
-// weighted pick: lower level = more likely to be picked
-function pickWeighted(pool) {
-  const weights = pool.map(item => {
-    const lvl = mastery[item.id] ? mastery[item.id].level : 0;
-    return 6 - lvl; // level0 -> weight6, level5 -> weight1
-  });
-  const total = weights.reduce((a,b)=>a+b,0);
-  let r = Math.random() * total;
-  for (let i=0;i<pool.length;i++) {
-    r -= weights[i];
-    if (r <= 0) return pool[i];
-  }
-  return pool[pool.length-1];
-}
-
-function getItemById(id) {
-  return fiveHabits.find(h=>h.id===id) || tenPoints.find(p=>p.id===id);
-}
-
-// ---------- WORD DIFF ----------
-function tokenize(str) {
-  return str.trim().split(/\s+/).filter(Boolean);
-}
-function normWord(w) {
-  return w.toLowerCase().replace(/[.,!?;:"'’“”—–-]+$/,'').replace(/^[.,!?;:"'’“”—–-]+/,'');
-}
-// Same punctuation-stripping as normWord but keeps original case — used for letter-by-letter hints.
-function coreWordChars(w) {
-  return w.replace(/[.,!?;:"'’“”—–-]+$/,'').replace(/^[.,!?;:"'’“”—–-]+/,'');
-}
-// simple LCS-based diff between reference words and user words
-function wordDiff(refWords, userWords) {
-  const n = refWords.length, m = userWords.length;
-  const dp = Array.from({length:n+1},()=>new Array(m+1).fill(0));
-  for (let i=n-1;i>=0;i--) {
-    for (let j=m-1;j>=0;j--) {
-      if (normWord(refWords[i]) === normWord(userWords[j])) dp[i][j] = dp[i+1][j+1]+1;
-      else dp[i][j] = Math.max(dp[i+1][j], dp[i][j+1]);
-    }
-  }
-  // backtrack to build annotated ref sequence: matched words = ok, unmatched ref words = missed
-  let i=0,j=0;
-  const out = [];
-  let matched = 0;
-  while (i<n && j<m) {
-    if (normWord(refWords[i]) === normWord(userWords[j])) {
-      out.push({w: refWords[i], t:'ok'});
-      matched++; i++; j++;
-    } else if (dp[i+1][j] >= dp[i][j+1]) {
-      out.push({w: refWords[i], t:'miss'});
-      i++;
-    } else {
-      j++; // extra user word, skip (could flag as 'bad' but we render against reference)
-    }
-  }
-  while (i<n) { out.push({w: refWords[i], t:'miss'}); i++; }
-  const pct = n===0 ? 100 : Math.round((matched/n)*100);
-  return { out, pct };
-}
-
-// ---------- RENDER ----------
 const app = document.getElementById('app');
-let currentMode = 'flash';
 
-async function loadMode() {
-  try {
-    const val = await Store.get('quiz-mode');
-    const valid = ['flash','cloze','type','qtype','order','verbal','progress'];
-    if (val && valid.includes(val)) currentMode = val;
-  } catch (e) { /* default stays */ }
-  document.querySelectorAll('nav.modes button').forEach(b => {
-    b.classList.toggle('active', b.dataset.mode === currentMode);
-  });
+function updateProgressLabel() {
+  document.getElementById('progressLabel').textContent =
+    editing ? 'Checklist editor' : (finished ? 'Run complete' : `Section ${idx + 1} of ${cards.length}`);
 }
-
-async function saveMode() {
-  await Store.set('quiz-mode', currentMode);
-}
-
-document.querySelectorAll('nav.modes button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('nav.modes button').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    currentMode = btn.dataset.mode;
-    saveMode();
-    render();
-  });
-});
 
 function render() {
-  if (!storageReady) { app.innerHTML = '<div class="card">Loading your progress…</div>'; return; }
-  if (currentMode === 'flash') renderFlash();
-  else if (currentMode === 'cloze') renderCloze();
-  else if (currentMode === 'type') renderType();
-  else if (currentMode === 'qtype') renderQt();
-  else if (currentMode === 'order') renderRecall();
-  else if (currentMode === 'verbal') renderVerbal();
-  else if (currentMode === 'progress') renderProgress();
-}
+  updateProgressLabel();
+  document.getElementById('btnEditMode').textContent = editing ? 'Back to practice' : 'Edit checklist';
+  if (editing) { renderEditor(); return; }
+  if (finished) { renderReport(); return; }
+  const card = cards[idx];
+  const imgSrc = `${idx + 1}.jpg`;
+  const imgHtml = `
+    <img src="${imgSrc}" alt="Cue photo for section ${idx + 1}" class="pretrip-img" id="pretripImg"
+         onerror="this.style.display='none'; var n=document.getElementById('imgMissingNote'); if(n) n.style.display='block';">
+    <div class="helptext" id="imgMissingNote" style="display:none; margin-bottom:10px;">(No photo found for ${imgSrc} — make sure it's in the same folder as this page.)</div>
+  `;
 
-// ----- FLASHCARDS -----
-let flashItem = null;
-let flashFlipped = false;
-let flashPoolIndex = -1;
-
-function flashSourcePool() { return [...scopedHabits(), ...scopedPoints()]; }
-
-function newFlashItem() {
-  if (itemOrderMode === 'sequential') { flashGoTo(flashPoolIndex + 1); return; }
-  const pool = flashSourcePool();
-  if (!pool.length) return;
-  flashItem = pickWeighted(pool);
-  flashPoolIndex = pool.findIndex(p => p.id === flashItem.id);
-  flashFlipped = false;
-}
-
-function flashGoTo(targetIndex) {
-  const pool = flashSourcePool();
-  if (!pool.length) return;
-  let idx = targetIndex;
-  if (idx < 0) idx = pool.length - 1;
-  if (idx >= pool.length) idx = 0;
-  flashPoolIndex = idx;
-  flashItem = pool[idx];
-  flashFlipped = false;
-}
-function flashNext() { flashGoTo(flashPoolIndex + 1); }
-function flashPrev() { flashGoTo(flashPoolIndex - 1); }
-
-function renderFlash() {
-  if (!flashItem) newFlashItem();
-  const item = flashItem;
-  const isHabit = !!item.key;
-  let backHtml = '';
-  if (isHabit) {
-    backHtml = `
-      ${hidePrompts ? '' : '<div class="row"><div class="lbl">How do you do it?</div></div>'}
-      <div class="row"><div class="val">${item.how}</div></div>
-      ${hidePrompts ? '' : '<div class="row"><div class="lbl">What does it do for you?</div></div>'}
-      <div class="row"><div class="val">${item.what}</div></div>
-      ${hidePrompts ? '' : '<div class="row"><div class="lbl">Key phrase</div></div>'}
-      <div class="row"><div class="val key">REMEMBER, "${item.key}"</div></div>
+  let bodyHtml;
+  if (!revealed) {
+    bodyHtml = `
+      ${imgHtml}
+      <div class="btnrow"><button class="btn primary" id="btnReveal">Reveal</button></div>
     `;
   } else {
-    backHtml = `
-      <div class="row"><div class="lbl">Explanation</div><div class="val">${getPointBodyText(item)}</div></div>
-      ${hidePrompts ? `<div class="row"><div class="val key">${item.why}</div></div>` : `<div class="row"><div class="lbl">Why?</div><div class="val key">${item.why}</div></div>`}
-    `;
-  }
-  app.innerHTML = `
-    <div class="card" id="flashCard">
-      <div class="eyebrow">${isHabit ? 'Five Seeing Habits' : '10 Point Commentary'} · Flashcard</div>
-      <div class="flash-face" id="flashFace">
-        ${flashFlipped
-          ? `<div class="flash-back">${backHtml}</div>`
-          : `<div class="flash-title">${item.name || item.title}</div><div class="flash-hint">tap to reveal</div>`}
-      </div>
-      <div class="btnrow">
-        <button class="btn miss" id="btnMiss" ${!flashFlipped?'disabled':''}>Missed it</button>
-        <button class="btn got" id="btnGot" ${!flashFlipped?'disabled':''}>Got it</button>
-      </div>
-      <div class="cloze-nav" style="margin-top:10px; margin-bottom:0;">
-        <button class="btn ghost" id="btnFlashPrev">‹ Prev</button>
-        <button class="btn ghost" id="btnFlashNext">Next ›</button>
-      </div>
-    </div>
-    <div class="helptext">Cards you miss come back more often. Cards you nail five times in a row stop showing up as much — that's mastery.</div>
-  `;
-  if (flashFlipped) {
-    const cardEl = document.getElementById('flashCard');
-    if (cardEl) cardEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-  document.getElementById('flashFace').addEventListener('click', () => {
-    flashFlipped = !flashFlipped;
-    renderFlash();
-  });
-  const btnGot = document.getElementById('btnGot');
-  const btnMiss = document.getElementById('btnMiss');
-  if (btnGot) btnGot.addEventListener('click', () => { bumpMastery(item.id, true); newFlashItem(); renderFlash(); });
-  if (btnMiss) btnMiss.addEventListener('click', () => { bumpMastery(item.id, false); newFlashItem(); renderFlash(); });
-  document.getElementById('btnFlashPrev').addEventListener('click', () => { flashPrev(); renderFlash(); });
-  document.getElementById('btnFlashNext').addEventListener('click', () => { flashNext(); renderFlash(); });
-}
-
-// ----- CLOZE (fill-in-the-blank) -----
-let clozeItem = null;
-let clozeBlanks = []; // indices of words that are blanked
-let clozeWords = [];
-let clozeBlankableFlags = []; // parallel array: which word indices are allowed to be blanked
-let clozeWordTypes = []; // parallel array: 'heading' or 'content' per word index
-let clozeChecked = false;
-let clozePoolIndex = -1; // position of the current item within the current scoped pool
-
-function clozeSourcePool() {
-  const habitItems = scopedHabits().map((h, idx) => {
-    const titleWords = blankTitles ? tokenize(h.name) : [];
-    const heading1 = hidePrompts ? [] : tokenize("How do you do it?");
-    const content1 = tokenize(h.how);
-    const heading2 = hidePrompts ? [] : tokenize("What does it do for you?");
-    const content2 = tokenize(h.what);
-    const heading3 = hidePrompts ? [] : tokenize("Key Phrase");
-    const leadIn = tokenize("Remember,");
-    const content3 = tokenize(`"${h.key}"`);
-    const words = [...titleWords, ...heading1, ...content1, ...heading2, ...content2, ...heading3, ...leadIn, ...content3];
-    const blankable = [
-      ...titleWords.map(() => true),
-      ...heading1.map(() => false),
-      ...content1.map(() => true),
-      ...heading2.map(() => false),
-      ...content2.map(() => true),
-      ...heading3.map(() => false),
-      ...leadIn.map(() => false),
-      ...content3.map(() => true),
-    ];
-    const types = [
-      ...titleWords.map(() => 'title'),
-      ...heading1.map(() => 'heading'),
-      ...content1.map(() => 'content'),
-      ...heading2.map(() => 'heading'),
-      ...content2.map(() => 'content'),
-      ...heading3.map(() => 'heading'),
-      ...leadIn.map(() => 'content'),
-      ...content3.map(() => 'content'),
-    ];
-    return {
-      id: h.id, title: h.name, why: null, words, blankable, types,
-      listLabel: '5s', itemNumber: idx + 1, listTotal: fiveHabits.length,
-      showTitleSeparately: !blankTitles
-    };
-  });
-  const pointItems = scopedPoints().map((p, idx) => {
-    const titleWords = blankTitles ? tokenize(p.title) : [];
-    const bodyWords = tokenize(getPointBodyText(p));
-    const whyWords = blankTitles ? tokenize(p.why) : [];
-    const words = [...titleWords, ...bodyWords, ...whyWords];
-    const blankable = [...titleWords.map(() => true), ...bodyWords.map(() => true), ...whyWords.map(() => true)];
-    const types = [...titleWords.map(() => 'title'), ...bodyWords.map(() => 'content'), ...whyWords.map(() => 'why')];
-    return {
-      id: p.id, title: p.title, why: blankTitles ? null : p.why, words, blankable, types,
-      listLabel: '10s', itemNumber: idx + 1, listTotal: tenPoints.length,
-      showTitleSeparately: !blankTitles
-    };
-  });
-  return [...habitItems, ...pointItems];
-}
-
-// Applies a cloze item and (re)computes its blanks based on the item's current mastery level.
-function applyClozeItem(item) {
-  clozeItem = item;
-  clozeWords = item.words;
-  clozeBlankableFlags = item.blankable;
-  clozeWordTypes = item.types;
-  const lvl = mastery[item.id] ? mastery[item.id].level : 0;
-  // blank ratio grows with mastery level: level0 ~15%, level5 ~60%
-  const ratio = 0.15 + lvl * 0.09;
-  const targetBlanks = Math.max(3, Math.round(clozeWords.length * ratio));
-  const idxs = clozeWords.map((_,i)=>i).filter(i => clozeBlankableFlags[i] && clozeWords[i].length > 2);
-  // shuffle
-  for (let i=idxs.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [idxs[i],idxs[j]]=[idxs[j],idxs[i]]; }
-  clozeBlanks = idxs.slice(0, Math.min(targetBlanks, idxs.length)).sort((a,b)=>a-b);
-  clozeChecked = false;
-}
-
-function newCloze() {
-  if (itemOrderMode === 'sequential') { clozeGoTo(clozePoolIndex + 1); return; }
-  const pool = clozeSourcePool();
-  const item = pickWeighted(pool);
-  clozePoolIndex = pool.findIndex(p => p.id === item.id);
-  applyClozeItem(item);
-}
-
-// Move to a specific position in the current scoped pool (wraps around both ends).
-function clozeGoTo(targetIndex) {
-  const pool = clozeSourcePool();
-  if (!pool.length) return;
-  let idx = targetIndex;
-  if (idx < 0) idx = pool.length - 1;
-  if (idx >= pool.length) idx = 0;
-  clozePoolIndex = idx;
-  applyClozeItem(pool[idx]);
-}
-
-function clozeNext() { clozeGoTo(clozePoolIndex + 1); }
-function clozePrev() { clozeGoTo(clozePoolIndex - 1); }
-
-// Redo the exact same item (used from the check screen) — regenerates blanks using
-// the item's current (possibly just-updated) mastery level, so repeated drilling
-// naturally gets harder as you improve.
-function clozeRepeat() {
-  const pool = clozeSourcePool();
-  const idx = pool.findIndex(p => p.id === clozeItem.id);
-  if (idx === -1) { newCloze(); return; }
-  clozePoolIndex = idx;
-  applyClozeItem(pool[idx]);
-}
-
-function renderCloze() {
-  if (!clozeItem) newCloze();
-  const lvl = mastery[clozeItem.id] ? mastery[clozeItem.id].level : 0;
-  let html = '';
-  let prevType = null;
-  clozeWords.forEach((w, i) => {
-    const type = clozeWordTypes[i] || 'content';
-    if (prevType !== null && type !== prevType) {
-      if (type === 'title' || prevType === 'title' || type === 'why' || prevType === 'why') {
-        html += '<div class="cloze-divider"></div>';
-      } else {
-        html += '<br>';
-      }
-    }
-    if (type === 'heading') {
-      html += `<span class="cloze-heading">${w}</span> `;
-    } else if (clozeBlanks.includes(i)) {
-      html += `<input class="cloze-input" data-idx="${i}" data-answer="${normWord(w)}" size="${Math.max(4,w.length)}" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" ${clozeChecked?'disabled':''}> `;
-    } else {
-      html += w + ' ';
-    }
-    prevType = type;
-  });
-  app.innerHTML = `
-    <div class="card">
-      <div class="eyebrow">${clozeItem.listLabel} · Item ${clozeItem.itemNumber} of ${clozeItem.listTotal} · Fill-in · Mastery level ${lvl}/5</div>
-      ${clozeItem.showTitleSeparately ? `<div style="font-weight:700; margin-bottom:10px;">${clozeItem.title}</div>` : ''}
-      ${!clozeChecked ? `
-      <div class="cloze-nav">
-        <button class="btn ghost" id="btnClozePrev">‹ Prev</button>
-        <button class="btn ghost" id="btnClozeNext">Next ›</button>
-      </div>` : ''}
-      <div class="cloze-text" id="clozeText">${html}</div>
-      ${clozeItem.why ? (hidePrompts ? `<div class="why-tag">${clozeItem.why}</div>` : `<div class="why-tag"><b>Why?</b> ${clozeItem.why}</div>`) : ''}
-      <div class="btnrow">
-        <button class="btn ghost" id="btnSkip">Skip</button>
-        <button class="btn primary" id="btnCheck" ${clozeChecked?'disabled':''}>Check</button>
-      </div>
-      <div id="clozeResult" style="margin-top:10px;"></div>
-    </div>
-    <div class="helptext">Blanks get denser as you master each point — early on just a few words are missing, near mastery almost the whole passage is blank.</div>
-  `;
-  document.getElementById('btnSkip').addEventListener('click', () => { newCloze(); renderCloze(); });
-  document.getElementById('btnCheck').addEventListener('click', checkCloze);
-  const prevBtn = document.getElementById('btnClozePrev');
-  const nextBtn = document.getElementById('btnClozeNext');
-  if (prevBtn) prevBtn.addEventListener('click', () => { clozePrev(); renderCloze(); });
-  if (nextBtn) nextBtn.addEventListener('click', () => { clozeNext(); renderCloze(); });
-}
-
-function checkCloze() {
-  const inputs = document.querySelectorAll('.cloze-input');
-  let correctCount = 0;
-  inputs.forEach(inp => {
-    const idx = parseInt(inp.dataset.idx);
-    const originalWord = clozeWords[idx];
-    const ans = inp.dataset.answer;
-    const userTyped = inp.value.trim();
-    const isCorrect = normWord(userTyped) === ans && normWord(userTyped).length > 0;
-    if (isCorrect) correctCount++;
-
-    const span = document.createElement('span');
-    span.className = 'cloze-check ' + (isCorrect ? 'ok' : 'incorrect');
-    span.dataset.correctWord = originalWord;
-    span.dataset.userWord = userTyped.length ? userTyped : '(blank)';
-    span.dataset.showingCorrect = isCorrect ? 'true' : 'false';
-    span.textContent = isCorrect ? originalWord : span.dataset.userWord;
-
-    if (!isCorrect) {
-      span.title = 'Tap to see the correct word';
-      span.addEventListener('click', () => {
-        const showingCorrect = span.dataset.showingCorrect === 'true';
-        if (showingCorrect) {
-          span.textContent = span.dataset.userWord;
-          span.classList.remove('ok');
-          span.classList.add('incorrect');
-          span.classList.remove('was-wrong');
-          span.dataset.showingCorrect = 'false';
-        } else {
-          span.textContent = span.dataset.correctWord;
-          span.classList.remove('incorrect');
-          span.classList.add('ok', 'was-wrong');
-          span.dataset.showingCorrect = 'true';
-        }
-      });
-    }
-    inp.parentNode.replaceChild(span, inp);
-  });
-  clozeChecked = true;
-  const pct = inputs.length ? Math.round((correctCount/inputs.length)*100) : 100;
-  const color = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)';
-  document.getElementById('clozeResult').innerHTML =
-    `<span class="score-badge" style="background:${color}22;color:${color};">${correctCount}/${inputs.length} correct (${pct}%)</span>
-     <span class="why-tag" style="display:block; margin-top:6px;">Tap any red word to check the correct answer.</span>`;
-  bumpMastery(clozeItem.id, pct >= 75);
-  document.getElementById('btnCheck').disabled = true;
-  const btnRow = document.createElement('div');
-  btnRow.className = 'btnrow';
-  btnRow.style.marginTop = '10px';
-  const repeatBtn = document.createElement('button');
-  repeatBtn.className = 'btn ghost';
-  repeatBtn.textContent = 'Repeat this item';
-  repeatBtn.addEventListener('click', () => { clozeRepeat(); renderCloze(); });
-  const nextBtn = document.createElement('button');
-  nextBtn.className = 'btn primary';
-  nextBtn.textContent = 'Next';
-  nextBtn.addEventListener('click', () => { newCloze(); renderCloze(); });
-  btnRow.appendChild(repeatBtn);
-  btnRow.appendChild(nextBtn);
-  document.getElementById('clozeResult').appendChild(btnRow);
-}
-
-// ----- TYPE IT OUT -----
-let typeItem = null;
-let typePoolIndex = -1;
-let typeTargetWords = [];   // flat tokenized target words (content only — headings aren't typed)
-let typeChunkBounds = [];   // [{start, end, label}] — which word-index range belongs to which labeled chunk
-let typeCommitted = [];     // words locked in so far (correct, displayed with real punctuation)
-let typeCurrentIndex = 0;   // index into typeTargetWords currently being typed
-let typeHintCount = 0;
-let typeHintedPositions = new Set(); // unique word indices that needed a hint
-let typeHintLevel = 0;      // progressive reveal level for the word currently being typed: 0/1/2/3(=whole word)
-let typeWordHintLetters = []; // per committed word: how many leading letters were revealed via hint (0 = none)
-let typeMistakeCount = 0;
-let typeMistakePositions = new Set(); // unique word indices that were typed wrong at least once
-let typeFinished = false;
-
-function typeSourcePool() {
-  const habitItems = scopedHabits().map((h, idx) => ({
-    id: h.id, title: h.name,
-    chunks: [
-      ...(typeIncludeTitles ? [{ label: null, words: tokenize(h.name) }] : []),
-      { label: hidePrompts ? null : 'How do you do it?', words: tokenize(h.how) },
-      { label: hidePrompts ? null : 'What does it do for you?', words: tokenize(h.what) },
-      { label: hidePrompts ? null : 'Key Phrase', words: tokenize(`Remember, "${h.key}"`) },
-    ],
-    listLabel: '5s', itemNumber: idx + 1, listTotal: fiveHabits.length,
-    showTitleSeparately: !typeIncludeTitles
-  }));
-  const pointItems = scopedPoints().map((p, idx) => ({
-    id: p.id, title: p.title,
-    chunks: [
-      ...(typeIncludeTitles ? [{ label: null, words: tokenize(p.title) }] : []),
-      { label: null, words: tokenize(getPointBodyText(p)) },
-      { label: hidePrompts ? null : 'Why?', words: tokenize(p.why) }
-    ],
-    listLabel: '10s', itemNumber: idx + 1, listTotal: tenPoints.length,
-    showTitleSeparately: !typeIncludeTitles
-  }));
-  return [...habitItems, ...pointItems];
-}
-
-// Words that are pure punctuation (e.g. a lone " – ") normalize to an empty string and can
-// never be "typed correctly" on their own — auto-fill them once the word before is confirmed.
-function autoFillPunctuationWords() {
-  while (typeCurrentIndex < typeTargetWords.length && normWord(typeTargetWords[typeCurrentIndex]).length === 0) {
-    typeCommitted.push(typeTargetWords[typeCurrentIndex]);
-    typeCurrentIndex++;
-  }
-}
-
-function applyTypeItem(item) {
-  typeItem = item;
-  typeTargetWords = [];
-  typeChunkBounds = [];
-  let pos = 0;
-  item.chunks.forEach(chunk => {
-    const start = pos;
-    typeTargetWords.push(...chunk.words);
-    pos += chunk.words.length;
-    typeChunkBounds.push({ start, end: pos, label: chunk.label });
-  });
-  typeCommitted = [];
-  typeCurrentIndex = 0;
-  typeHintCount = 0;
-  typeHintedPositions = new Set();
-  typeHintLevel = 0;
-  typeWordHintLetters = new Array(typeTargetWords.length).fill(0);
-  typeMistakeCount = 0;
-  typeMistakePositions = new Set();
-  typeFinished = false;
-  autoFillPunctuationWords();
-}
-
-function newTypeItem() {
-  if (itemOrderMode === 'sequential') { typeGoTo(typePoolIndex + 1); return; }
-  const pool = typeSourcePool();
-  if (!pool.length) return;
-  const item = pickWeighted(pool);
-  typePoolIndex = pool.findIndex(p => p.id === item.id);
-  applyTypeItem(item);
-}
-
-function typeGoTo(targetIndex) {
-  const pool = typeSourcePool();
-  if (!pool.length) return;
-  let idx = targetIndex;
-  if (idx < 0) idx = pool.length - 1;
-  if (idx >= pool.length) idx = 0;
-  typePoolIndex = idx;
-  applyTypeItem(pool[idx]);
-}
-function typeNextItem() { typeGoTo(typePoolIndex + 1); }
-function typePrevItem() { typeGoTo(typePoolIndex - 1); }
-function typeRepeatItem() {
-  const pool = typeSourcePool();
-  const idx = pool.findIndex(p => p.id === typeItem.id);
-  if (idx === -1) { newTypeItem(); return; }
-  typePoolIndex = idx;
-  applyTypeItem(pool[idx]);
-}
-
-function renderType() {
-  if (!typeItem) newTypeItem();
-  if (typeFinished) { renderTypeSummary(); return; }
-  const item = typeItem;
-  app.innerHTML = `
-    <div class="card" id="typeCard">
-      <div class="eyebrow">${item.listLabel} · Item ${item.itemNumber} of ${item.listTotal} · Type it out · Word ${typeCommitted.length + 1} of ${typeTargetWords.length}</div>
-      ${item.showTitleSeparately ? `<div style="font-weight:700; margin-bottom:10px;">${item.title}</div>` : ''}
-      <div class="type-box" id="typeBox"><span id="typeCommittedWords"></span><input id="typeInput" class="type-input" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false"></div>
-      <div class="type-hint-row">
-        <div class="type-hint-box" id="typeHintBox">Hint: <span id="typeHintWord">—</span></div>
-        <button class="btn ghost" id="btnTypeHint">Hint (Tab)</button>
-        <span class="type-hint-count" id="typeHintCount">Hints: 0</span>
-        <span class="type-hint-count" id="typeMistakeCountEl">Mistakes: 0</span>
-      </div>
-      <div class="cloze-nav" style="margin-top:14px; margin-bottom:0;">
-        <button class="btn ghost" id="btnTypePrevLive">‹ Prev</button>
-        <button class="btn ghost" id="btnTypeNextLive">Next ›</button>
-      </div>
-    </div>
-    <div class="helptext">Type each word, then hit space to check it. A wrong word turns red and blocks you — backspace to fix it, or hint it. Tap any word you've already typed to redo it (counts as a hint). Tab or the Hint button reveals the next word. Prev/Next jumps straight to that item, abandoning anything not yet checked on this one.</div>
-  `;
-  const box = document.getElementById('typeBox');
-  const input = document.getElementById('typeInput');
-  const committedSpan = document.getElementById('typeCommittedWords');
-
-  function scrollBoxToBottom() { box.scrollTop = box.scrollHeight; }
-
-  function chunkIndexForWord(wordIdx) {
-    for (let c = 0; c < typeChunkBounds.length; c++) {
-      if (wordIdx >= typeChunkBounds[c].start && wordIdx < typeChunkBounds[c].end) return c;
-    }
-    return typeChunkBounds.length - 1;
-  }
-
-  function renderCommittedWords() {
-    // Render chunk by chunk, up through whichever chunk the cursor is currently in,
-    // so the "How do you do it? / What does it do for you? / Key Phrase" labels show
-    // in the right place without ever being something the user has to type themselves.
-    const upToChunk = chunkIndexForWord(Math.min(typeCurrentIndex, typeTargetWords.length - 1));
-    let html = '';
-    for (let c = 0; c <= upToChunk; c++) {
-      const bounds = typeChunkBounds[c];
-      if (c > 0) html += '<div class="cloze-divider"></div>';
-      if (bounds.label) html += `<span class="cloze-heading">${bounds.label}</span> `;
-      const end = Math.min(bounds.end, typeCommitted.length);
-      for (let i = bounds.start; i < end; i++) {
-        if (normWord(typeTargetWords[i]).length === 0) {
-          html += `<span class="type-word-punct">${typeCommitted[i]}</span> `;
-        } else {
-          html += `<span class="type-word" data-idx="${i}">${typeCommitted[i]}</span> `;
-        }
-      }
-    }
-    committedSpan.innerHTML = html;
-    committedSpan.querySelectorAll('.type-word').forEach(el => {
-      el.addEventListener('click', () => {
-        const idx = parseInt(el.dataset.idx);
-        fixFromIndex(idx);
-      });
-    });
-    scrollBoxToBottom();
-  }
-
-  function updateEyebrow() {
-    const eyebrow = document.querySelector('#typeCard .eyebrow');
-    if (eyebrow) eyebrow.textContent = `${item.listLabel} · Item ${item.itemNumber} of ${item.listTotal} · Type it out · Word ${typeCommitted.length + 1} of ${typeTargetWords.length}`;
-  }
-
-  function updateHintUI(revealedText) {
-    document.getElementById('typeHintWord').textContent = revealedText || '—';
-    document.getElementById('typeHintCount').textContent = `Hints: ${typeHintCount}`;
-  }
-
-  function fixFromIndex(idx) {
-    typeCommitted = typeCommitted.slice(0, idx);
-    typeCurrentIndex = idx;
-    typeHintCount++;
-    typeHintedPositions.add(idx);
-    typeWordHintLetters[idx] = typeTargetWords[idx].length; // clicking to fix reveals the whole word
-    typeHintLevel = 3;
-    input.value = '';
-    input.classList.remove('wrong');
-    renderCommittedWords();
-    updateEyebrow();
-    updateHintUI(typeTargetWords[idx]);
-    input.focus();
-  }
-
-  function giveHint() {
-    if (typeCurrentIndex >= typeTargetWords.length) return;
-    const target = typeTargetWords[typeCurrentIndex];
-    if (typeHintLevel >= 3) {
-      // Already fully revealed — just re-show it, no new information given, no extra count.
-      updateHintUI(target);
-      input.focus();
-      return;
-    }
-    typeHintLevel++;
-    typeHintCount++;
-    typeHintedPositions.add(typeCurrentIndex);
-    const revealLen = typeHintLevel >= 3 ? target.length : typeHintLevel;
-    const revealText = target.slice(0, revealLen) + (revealLen < target.length ? '…' : '');
-    updateHintUI(revealText);
-    input.focus();
-  }
-
-  function finishItem() {
-    bumpMastery(item.id, typeHintCount === 0 && typeMistakeCount === 0);
-    typeFinished = true;
-    renderTypeSummary();
-  }
-
-  function commitWord() {
-    const raw = input.value;
-    if (!raw.trim()) return; // ignore extra spaces with nothing typed
-    const target = typeTargetWords[typeCurrentIndex];
-    if (normWord(raw) === normWord(target) && normWord(target).length > 0) {
-      typeWordHintLetters[typeCurrentIndex] = typeHintLevel >= 3 ? target.length : typeHintLevel;
-      typeCommitted.push(target);
-      typeCurrentIndex++;
-      typeHintLevel = 0; // fresh word, fresh hint progression
-      autoFillPunctuationWords();
-      input.value = '';
-      input.classList.remove('wrong');
-      updateHintUI(null);
-      renderCommittedWords();
-      updateEyebrow();
-      if (typeCurrentIndex >= typeTargetWords.length) { finishItem(); return; }
-    } else {
-      // Only count a fresh mistake the first time this attempt goes wrong — repeatedly
-      // hitting space on the same unedited wrong entry shouldn't inflate the count.
-      if (!input.classList.contains('wrong')) {
-        typeMistakeCount++;
-        typeMistakePositions.add(typeCurrentIndex);
-        document.getElementById('typeMistakeCountEl').textContent = `Mistakes: ${typeMistakeCount}`;
-      }
-      input.classList.add('wrong');
-    }
-  }
-
-  input.addEventListener('keydown', (e) => {
-    if (e.key === ' ') {
-      e.preventDefault();
-      commitWord();
-    } else if (e.key === 'Tab') {
-      e.preventDefault();
-      giveHint();
-    }
-  });
-  // Mobile virtual keyboards (Gboard, Samsung Keyboard, etc.) often don't dispatch a
-  // usable keydown for the space bar, so the space just lands in the input's value.
-  // Catch it here too: if the value now ends in a space, treat that as the commit trigger.
-  input.addEventListener('input', () => {
-    if (input.value.endsWith(' ')) {
-      const wordPart = input.value.slice(0, -1);
-      if (!wordPart.trim()) {
-        input.value = ''; // leading space with nothing typed yet — just discard it
-        return;
-      }
-      input.value = wordPart;
-      commitWord();
-    } else {
-      input.classList.remove('wrong');
-    }
-  });
-  document.getElementById('btnTypeHint').addEventListener('click', giveHint);
-  box.addEventListener('click', (e) => { if (e.target === box || e.target === committedSpan) input.focus(); });
-  document.getElementById('btnTypePrevLive').addEventListener('click', () => { typePrevItem(); renderType(); });
-  document.getElementById('btnTypeNextLive').addEventListener('click', () => { typeNextItem(); renderType(); });
-
-  renderCommittedWords();
-  input.focus();
-}
-
-function renderTypeSummary() {
-  const item = typeItem;
-  const total = typeTargetWords.length;
-  const issues = typeHintCount + typeMistakeCount;
-  const perfect = issues === 0;
-  const color = perfect ? 'var(--green)' : issues <= Math.ceil(total * 0.15) ? 'var(--amber)' : 'var(--red)';
-  function coloredWord(i) {
-    const w = typeCommitted[i];
-    const hintLetters = typeWordHintLetters[i] || 0;
-    const missed = typeMistakePositions.has(i);
-    if (hintLetters > 0) {
-      const revealLen = Math.min(hintLetters, w.length);
-      const redPart = w.slice(0, revealLen);
-      const restPart = w.slice(revealLen);
-      const restHtml = restPart ? (missed ? `<span class="sum-mistake">${restPart}</span>` : restPart) : '';
-      return `<span class="sum-hint">${redPart}</span>${restHtml}`;
-    }
-    if (missed) return `<span class="sum-mistake">${w}</span>`;
-    return w;
-  }
-  // Walk chunk-by-chunk (same structure as the live typing view) so headings like
-  // "How do you do it?" / "Key Phrase" / "Why?" still show up here, not just while typing.
-  let sentenceHtml = '';
-  typeChunkBounds.forEach((bounds, c) => {
-    if (c > 0) sentenceHtml += '<div class="cloze-divider"></div>';
-    if (bounds.label) sentenceHtml += `<span class="cloze-heading">${bounds.label}</span> `;
-    const wordsHtml = [];
-    for (let i = bounds.start; i < bounds.end; i++) wordsHtml.push(coloredWord(i));
-    sentenceHtml += wordsHtml.join(' ');
-  });
-  app.innerHTML = `
-    <div class="card">
-      <div class="eyebrow">${item.listLabel} · Item ${item.itemNumber} of ${item.listTotal} · Type it out · Results</div>
-      ${item.showTitleSeparately ? `<div style="font-weight:700; margin-bottom:10px;">${item.title}</div>` : ''}
-      <div style="margin-bottom:10px;">
-        <span class="score-badge" style="background:${color}22;color:${color};">${typeHintCount} hint${typeHintCount===1?'':'s'} · ${typeMistakeCount} mistake${typeMistakeCount===1?'':'s'} · ${total} words</span>
-      </div>
-      <div class="diff-line">${sentenceHtml}</div>
-      ${!perfect ? `<div class="type-legend"><span class="sum-hint">hinted letters</span>&nbsp;&nbsp;<span class="sum-mistake">mistake, no hint</span></div>` : `<div class="why-tag" style="margin-top:12px;">No hints, no mistakes — clean run.</div>`}
-      <div class="btnrow" style="margin-top:16px;">
-        <button class="btn ghost" id="btnTypePrev">‹ Prev</button>
-        <button class="btn ghost" id="btnTypeRepeat">Repeat</button>
-        <button class="btn primary" id="btnTypeNext">Next ›</button>
-      </div>
-    </div>
-  `;
-  document.getElementById('btnTypePrev').addEventListener('click', () => { typePrevItem(); renderType(); });
-  document.getElementById('btnTypeRepeat').addEventListener('click', () => { typeRepeatItem(); renderType(); });
-  document.getElementById('btnTypeNext').addEventListener('click', () => { typeNextItem(); renderType(); });
-}
-
-// ----- QUICK TYPE (title + tagline, typed) -----
-let qtItem = null;
-let qtPoolIndex = -1;
-let qtTargetWords = [];
-let qtChunkBounds = [];
-let qtCommitted = [];
-let qtCurrentIndex = 0;
-let qtHintCount = 0;
-let qtHintedPositions = new Set();
-let qtHintLevel = 0;
-let qtWordHintLetters = [];
-let qtMistakeCount = 0;
-let qtMistakePositions = new Set();
-let qtFinished = false;
-
-function qtSourcePool() {
-  const habitItems = scopedHabits().map((h, idx) => ({
-    id: h.id, title: h.name,
-    chunks: [
-      { label: null, words: tokenize(h.name) },
-      { label: hidePrompts ? null : 'Key Phrase', words: tokenize(`Remember, "${h.key}"`) },
-    ],
-    listLabel: '5s', itemNumber: idx + 1, listTotal: fiveHabits.length,
-    showTitleSeparately: false
-  }));
-  const pointItems = scopedPoints().map((p, idx) => ({
-    id: p.id, title: p.title,
-    chunks: [
-      { label: null, words: tokenize(p.title) },
-      { label: hidePrompts ? null : 'Why?', words: tokenize(p.why) }
-    ],
-    listLabel: '10s', itemNumber: idx + 1, listTotal: tenPoints.length,
-    showTitleSeparately: false
-  }));
-  return [...habitItems, ...pointItems];
-}
-
-function autoFillQtPunctuationWords() {
-  while (qtCurrentIndex < qtTargetWords.length && normWord(qtTargetWords[qtCurrentIndex]).length === 0) {
-    qtCommitted.push(qtTargetWords[qtCurrentIndex]);
-    qtCurrentIndex++;
-  }
-}
-
-function applyQtItem(item) {
-  qtItem = item;
-  qtTargetWords = [];
-  qtChunkBounds = [];
-  let pos = 0;
-  item.chunks.forEach(chunk => {
-    const start = pos;
-    qtTargetWords.push(...chunk.words);
-    pos += chunk.words.length;
-    qtChunkBounds.push({ start, end: pos, label: chunk.label });
-  });
-  qtCommitted = [];
-  qtCurrentIndex = 0;
-  qtHintCount = 0;
-  qtHintedPositions = new Set();
-  qtHintLevel = 0;
-  qtWordHintLetters = new Array(qtTargetWords.length).fill(0);
-  qtMistakeCount = 0;
-  qtMistakePositions = new Set();
-  qtFinished = false;
-  autoFillQtPunctuationWords();
-}
-
-function newQtItem() {
-  if (itemOrderMode === 'sequential') { qtGoTo(qtPoolIndex + 1); return; }
-  const pool = qtSourcePool();
-  if (!pool.length) return;
-  const item = pickWeighted(pool);
-  qtPoolIndex = pool.findIndex(p => p.id === item.id);
-  applyQtItem(item);
-}
-
-function qtGoTo(targetIndex) {
-  const pool = qtSourcePool();
-  if (!pool.length) return;
-  let idx = targetIndex;
-  if (idx < 0) idx = pool.length - 1;
-  if (idx >= pool.length) idx = 0;
-  qtPoolIndex = idx;
-  applyQtItem(pool[idx]);
-}
-function qtNextItem() { qtGoTo(qtPoolIndex + 1); }
-function qtPrevItem() { qtGoTo(qtPoolIndex - 1); }
-function qtRepeatItem() {
-  const pool = qtSourcePool();
-  const idx = pool.findIndex(p => p.id === qtItem.id);
-  if (idx === -1) { newQtItem(); return; }
-  qtPoolIndex = idx;
-  applyQtItem(pool[idx]);
-}
-
-function renderQt() {
-  if (!qtItem) newQtItem();
-  if (qtFinished) { renderQtSummary(); return; }
-  const item = qtItem;
-  app.innerHTML = `
-    <div class="card" id="qtCard">
-      <div class="eyebrow">${item.listLabel} · Item ${item.itemNumber} of ${item.listTotal} · Quick Type · Word ${qtCommitted.length + 1} of ${qtTargetWords.length}</div>
-      <div class="type-box" id="qtBox"><span id="qtCommittedWords"></span><input id="qtInput" class="type-input" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false"></div>
-      <div class="type-hint-row">
-        <div class="type-hint-box" id="qtHintBox">Hint: <span id="qtHintWord">—</span></div>
-        <button class="btn ghost" id="btnQtHint">Hint (Tab)</button>
-        <span class="type-hint-count" id="qtHintCountEl">Hints: 0</span>
-        <span class="type-hint-count" id="qtMistakeCountEl">Mistakes: 0</span>
-      </div>
-      <div class="cloze-nav" style="margin-top:14px; margin-bottom:0;">
-        <button class="btn ghost" id="btnQtPrevLive">‹ Prev</button>
-        <button class="btn ghost" id="btnQtNextLive">Next ›</button>
-      </div>
-    </div>
-    <div class="helptext">Just the title and its tagline (Key Phrase / Why?) — a fast typing pass to lock in the short version. Space checks each word, wrong words block in red, Tab or Hint reveals a letter at a time.</div>
-  `;
-  const box = document.getElementById('qtBox');
-  const input = document.getElementById('qtInput');
-  const committedSpan = document.getElementById('qtCommittedWords');
-
-  function scrollBoxToBottom() { box.scrollTop = box.scrollHeight; }
-
-  function chunkIndexForWord(wordIdx) {
-    for (let c = 0; c < qtChunkBounds.length; c++) {
-      if (wordIdx >= qtChunkBounds[c].start && wordIdx < qtChunkBounds[c].end) return c;
-    }
-    return qtChunkBounds.length - 1;
-  }
-
-  function renderCommittedWords() {
-    const upToChunk = chunkIndexForWord(Math.min(qtCurrentIndex, qtTargetWords.length - 1));
-    let html = '';
-    for (let c = 0; c <= upToChunk; c++) {
-      const bounds = qtChunkBounds[c];
-      if (c > 0) html += '<div class="cloze-divider"></div>';
-      if (bounds.label) html += `<span class="cloze-heading">${bounds.label}</span> `;
-      const end = Math.min(bounds.end, qtCommitted.length);
-      for (let i = bounds.start; i < end; i++) {
-        if (normWord(qtTargetWords[i]).length === 0) {
-          html += `<span class="type-word-punct">${qtCommitted[i]}</span> `;
-        } else {
-          html += `<span class="type-word" data-idx="${i}">${qtCommitted[i]}</span> `;
-        }
-      }
-    }
-    committedSpan.innerHTML = html;
-    committedSpan.querySelectorAll('.type-word').forEach(el => {
-      el.addEventListener('click', () => {
-        const idx = parseInt(el.dataset.idx);
-        fixFromIndex(idx);
-      });
-    });
-    scrollBoxToBottom();
-  }
-
-  function updateEyebrow() {
-    const eyebrow = document.querySelector('#qtCard .eyebrow');
-    if (eyebrow) eyebrow.textContent = `${item.listLabel} · Item ${item.itemNumber} of ${item.listTotal} · Quick Type · Word ${qtCommitted.length + 1} of ${qtTargetWords.length}`;
-  }
-
-  function updateHintUI(revealedText) {
-    document.getElementById('qtHintWord').textContent = revealedText || '—';
-    document.getElementById('qtHintCountEl').textContent = `Hints: ${qtHintCount}`;
-  }
-
-  function fixFromIndex(idx) {
-    qtCommitted = qtCommitted.slice(0, idx);
-    qtCurrentIndex = idx;
-    qtHintCount++;
-    qtHintedPositions.add(idx);
-    qtWordHintLetters[idx] = qtTargetWords[idx].length;
-    qtHintLevel = 3;
-    input.value = '';
-    input.classList.remove('wrong');
-    renderCommittedWords();
-    updateEyebrow();
-    updateHintUI(qtTargetWords[idx]);
-    input.focus();
-  }
-
-  function giveHint() {
-    if (qtCurrentIndex >= qtTargetWords.length) return;
-    const target = qtTargetWords[qtCurrentIndex];
-    if (qtHintLevel >= 3) {
-      updateHintUI(target);
-      input.focus();
-      return;
-    }
-    qtHintLevel++;
-    qtHintCount++;
-    qtHintedPositions.add(qtCurrentIndex);
-    const revealLen = qtHintLevel >= 3 ? target.length : qtHintLevel;
-    const revealText = target.slice(0, revealLen) + (revealLen < target.length ? '…' : '');
-    updateHintUI(revealText);
-    input.focus();
-  }
-
-  function finishItem() {
-    bumpMastery(item.id, qtHintCount === 0 && qtMistakeCount === 0);
-    qtFinished = true;
-    renderQtSummary();
-  }
-
-  function commitWord() {
-    const raw = input.value;
-    if (!raw.trim()) return;
-    const target = qtTargetWords[qtCurrentIndex];
-    if (normWord(raw) === normWord(target) && normWord(target).length > 0) {
-      qtWordHintLetters[qtCurrentIndex] = qtHintLevel >= 3 ? target.length : qtHintLevel;
-      qtCommitted.push(target);
-      qtCurrentIndex++;
-      qtHintLevel = 0;
-      autoFillQtPunctuationWords();
-      input.value = '';
-      input.classList.remove('wrong');
-      updateHintUI(null);
-      renderCommittedWords();
-      updateEyebrow();
-      if (qtCurrentIndex >= qtTargetWords.length) { finishItem(); return; }
-    } else {
-      if (!input.classList.contains('wrong')) {
-        qtMistakeCount++;
-        qtMistakePositions.add(qtCurrentIndex);
-        document.getElementById('qtMistakeCountEl').textContent = `Mistakes: ${qtMistakeCount}`;
-      }
-      input.classList.add('wrong');
-    }
-  }
-
-  input.addEventListener('keydown', (e) => {
-    if (e.key === ' ') {
-      e.preventDefault();
-      commitWord();
-    } else if (e.key === 'Tab') {
-      e.preventDefault();
-      giveHint();
-    }
-  });
-  input.addEventListener('input', () => {
-    if (input.value.endsWith(' ')) {
-      const wordPart = input.value.slice(0, -1);
-      if (!wordPart.trim()) {
-        input.value = '';
-        return;
-      }
-      input.value = wordPart;
-      commitWord();
-    } else {
-      input.classList.remove('wrong');
-    }
-  });
-  document.getElementById('btnQtHint').addEventListener('click', giveHint);
-  box.addEventListener('click', (e) => { if (e.target === box || e.target === committedSpan) input.focus(); });
-  document.getElementById('btnQtPrevLive').addEventListener('click', () => { qtPrevItem(); renderQt(); });
-  document.getElementById('btnQtNextLive').addEventListener('click', () => { qtNextItem(); renderQt(); });
-
-  renderCommittedWords();
-  input.focus();
-}
-
-function renderQtSummary() {
-  const item = qtItem;
-  const total = qtTargetWords.length;
-  const issues = qtHintCount + qtMistakeCount;
-  const perfect = issues === 0;
-  const color = perfect ? 'var(--green)' : issues <= Math.ceil(total * 0.15) ? 'var(--amber)' : 'var(--red)';
-  function coloredWord(i) {
-    const w = qtCommitted[i];
-    const hintLetters = qtWordHintLetters[i] || 0;
-    const missed = qtMistakePositions.has(i);
-    if (hintLetters > 0) {
-      const revealLen = Math.min(hintLetters, w.length);
-      const redPart = w.slice(0, revealLen);
-      const restPart = w.slice(revealLen);
-      const restHtml = restPart ? (missed ? `<span class="sum-mistake">${restPart}</span>` : restPart) : '';
-      return `<span class="sum-hint">${redPart}</span>${restHtml}`;
-    }
-    if (missed) return `<span class="sum-mistake">${w}</span>`;
-    return w;
-  }
-  let sentenceHtml = '';
-  qtChunkBounds.forEach((bounds, c) => {
-    if (c > 0) sentenceHtml += '<div class="cloze-divider"></div>';
-    if (bounds.label) sentenceHtml += `<span class="cloze-heading">${bounds.label}</span> `;
-    const wordsHtml = [];
-    for (let i = bounds.start; i < bounds.end; i++) wordsHtml.push(coloredWord(i));
-    sentenceHtml += wordsHtml.join(' ');
-  });
-  app.innerHTML = `
-    <div class="card">
-      <div class="eyebrow">${item.listLabel} · Item ${item.itemNumber} of ${item.listTotal} · Quick Type · Results</div>
-      <div style="margin-bottom:10px;">
-        <span class="score-badge" style="background:${color}22;color:${color};">${qtHintCount} hint${qtHintCount===1?'':'s'} · ${qtMistakeCount} mistake${qtMistakeCount===1?'':'s'} · ${total} words</span>
-      </div>
-      <div class="diff-line">${sentenceHtml}</div>
-      ${!perfect ? `<div class="type-legend"><span class="sum-hint">hinted letters</span>&nbsp;&nbsp;<span class="sum-mistake">mistake, no hint</span></div>` : `<div class="why-tag" style="margin-top:12px;">No hints, no mistakes — clean run.</div>`}
-      <div class="btnrow" style="margin-top:16px;">
-        <button class="btn ghost" id="btnQtPrev">‹ Prev</button>
-        <button class="btn ghost" id="btnQtRepeat">Repeat</button>
-        <button class="btn primary" id="btnQtNext">Next ›</button>
-      </div>
-    </div>
-  `;
-  document.getElementById('btnQtPrev').addEventListener('click', () => { qtPrevItem(); renderQt(); });
-  document.getElementById('btnQtRepeat').addEventListener('click', () => { qtRepeatItem(); renderQt(); });
-  document.getElementById('btnQtNext').addEventListener('click', () => { qtNextItem(); renderQt(); });
-}
-
-// ----- QUICK RECALL (title + tagline) -----
-let recallSteps = [];
-let recallIndex = 0;
-let recallResults = [];
-let recallFinished = false;
-let recallAwaitingNext = false;
-
-function buildRecallSteps(scope) {
-  const steps = [];
-  if (scope !== 'points') {
-    fiveHabits.forEach((h, idx) => {
-      const itemNumber = idx + 1, listTotal = fiveHabits.length;
-      const base = { itemId: h.id, itemTitle: h.name, listLabel: '5s', itemNumber, listTotal };
-      steps.push({ ...base, label: null, text: h.name, part: 'title' });
-      steps.push({ ...base, label: 'Key Phrase', text: `Remember, "${h.key}"`, part: 'tagline' });
-    });
-  }
-  if (scope !== 'habits') {
-    tenPoints.forEach((p, idx) => {
-      const itemNumber = idx + 1, listTotal = tenPoints.length;
-      const base = { itemId: p.id, itemTitle: p.title, listLabel: '10s', itemNumber, listTotal };
-      steps.push({ ...base, label: null, text: p.title, part: 'title' });
-      steps.push({ ...base, label: 'Why?', text: p.why, part: 'tagline' });
-    });
-  }
-  return steps;
-}
-
-let recallBodyRevealed = false; // whether the body text is shown under a tapped title
-
-function startRecallSession() {
-  recallSteps = buildRecallSteps(quizScope);
-  recallIndex = 0;
-  recallResults = new Array(recallSteps.length).fill(null);
-  recallFinished = false;
-  recallAwaitingNext = false;
-  recallBodyRevealed = false;
-}
-
-// Same item-start-boundary trick as Verbal Practice's Prev/Next item, just over 2-step chunks.
-function recallItemStartIndex(fromIndex) {
-  const id = recallSteps[fromIndex].itemId;
-  let i = fromIndex;
-  while (i > 0 && recallSteps[i - 1].itemId === id) i--;
-  return i;
-}
-function recallNextItem() {
-  if (!recallSteps.length) return;
-  const curId = recallSteps[Math.min(recallIndex, recallSteps.length - 1)].itemId;
-  let idx = recallSteps.findIndex((s, i) => i > recallIndex && s.itemId !== curId);
-  if (idx === -1) idx = 0;
-  recallIndex = idx;
-  recallAwaitingNext = false;
-  recallBodyRevealed = false;
-  recallFinished = false;
-  renderRecall();
-}
-function recallPrevItem() {
-  if (!recallSteps.length) return;
-  const curStart = recallItemStartIndex(Math.min(recallIndex, recallSteps.length - 1));
-  if (curStart === 0) {
-    recallIndex = recallItemStartIndex(recallSteps.length - 1);
-  } else {
-    recallIndex = recallItemStartIndex(curStart - 1);
-  }
-  recallAwaitingNext = false;
-  recallBodyRevealed = false;
-  recallFinished = false;
-  renderRecall();
-}
-
-// The body text for a title step — how/what for a habit (key phrase is the next step already),
-// or the full explanation for a point (why is the next step already). Looked up fresh from the
-// source data since recall steps themselves only carry the title/tagline text.
-function recallBodyHtml(step) {
-  if (step.listLabel === '5s') {
-    const h = fiveHabits.find(x => x.id === step.itemId);
-    if (!h) return '';
-    return `
-      ${hidePrompts ? '' : '<div class="row"><div class="lbl">How do you do it?</div></div>'}
-      <div class="row"><div class="val">${h.how}</div></div>
-      ${hidePrompts ? '' : '<div class="row"><div class="lbl">What does it do for you?</div></div>'}
-      <div class="row"><div class="val">${h.what}</div></div>
-    `;
-  }
-  const p = tenPoints.find(x => x.id === step.itemId);
-  if (!p) return '';
-  return `<div class="row"><div class="val">${getPointBodyText(p)}</div></div>`;
-}
-
-function renderRecall() {
-  if (!recallSteps.length) startRecallSession();
-  if (recallFinished) { renderRecallSummary(); return; }
-  const step = recallSteps[recallIndex];
-  const isTitleStep = step.part === 'title';
-  const labelHtml = (!hidePrompts && step.label) ? `<div class="cloze-heading" style="margin-bottom:8px;">${step.label}</div>` : '';
-  const buttonsHtml = recallAwaitingNext
-    ? `<div class="btnrow" style="margin-top:20px;">
-         <button class="btn primary" id="recallNext">Reveal next</button>
-       </div>`
-    : `<div class="btnrow" style="margin-top:20px;">
-         <button class="btn miss" id="recallMiss">Missed it</button>
-         <button class="btn got" id="recallGot">Got it</button>
-       </div>`;
-  const titleHtml = isTitleStep
-    ? `<div class="flash-face" id="recallTitleFace" style="cursor:pointer; text-align:left; align-items:flex-start;">
-         <div class="flash-title" style="text-align:left; font-size:1.15rem; line-height:1.4;">${step.text}</div>
-         ${recallBodyRevealed
-           ? `<div class="flash-back" style="margin-top:14px;">${recallBodyHtml(step)}</div>`
-           : `<div class="flash-hint" style="margin-top:6px;">tap to reveal the body text</div>`}
-       </div>`
-    : `<div class="flash-title" style="text-align:left; font-size:1.15rem; line-height:1.4;">${step.text}</div>`;
-  app.innerHTML = `
-    <div class="card" id="recallCard">
-      <div class="eyebrow">${step.listLabel} · Item ${step.itemNumber} of ${step.listTotal} · Quick Recall · Step ${recallIndex + 1} of ${recallSteps.length}</div>
-      ${labelHtml}
-      ${titleHtml}
+    const itemsHtml = card.items.map(t => `<li>${escapeHtml(t)}</li>`).join('');
+    const buttonsHtml = awaitingNext
+      ? `<div class="btnrow"><button class="btn primary" id="btnNext">Next section</button></div>`
+      : `<div class="btnrow">
+           <button class="btn miss" id="btnMiss">Missed it</button>
+           <button class="btn got" id="btnGot">Got it</button>
+         </div>`;
+    bodyHtml = `
+      ${imgHtml}
+      <div class="section-title">${escapeHtml(card.title)}</div>
+      <ul class="check-list">${itemsHtml}</ul>
       ${buttonsHtml}
-      <div class="cloze-nav" style="margin-top:14px; margin-bottom:0;">
-        <button class="btn ghost" id="btnRecallPrev">‹ Prev item</button>
-        <button class="btn ghost" id="btnRecallNext">Next item ›</button>
-      </div>
-    </div>
-    <div class="helptext">Title, then its tagline — say it out loud, mark whether you got it right. On the title step, tap it to check the body text if you need to. Quick pass through everything instead of the full verbatim text.</div>
-  `;
-  const cardEl = document.getElementById('recallCard');
-  if (cardEl) cardEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  const titleFace = document.getElementById('recallTitleFace');
-  if (titleFace) titleFace.addEventListener('click', () => { recallBodyRevealed = !recallBodyRevealed; renderRecall(); });
-  const missBtn = document.getElementById('recallMiss');
-  const gotBtn = document.getElementById('recallGot');
-  const nextBtn = document.getElementById('recallNext');
-  if (missBtn) missBtn.addEventListener('click', () => recordRecall(false));
-  if (gotBtn) gotBtn.addEventListener('click', () => recordRecall(true));
-  if (nextBtn) nextBtn.addEventListener('click', advanceRecall);
-  document.getElementById('btnRecallPrev').addEventListener('click', recallPrevItem);
-  document.getElementById('btnRecallNext').addEventListener('click', recallNextItem);
-}
-
-function recordRecall(correct) {
-  const step = recallSteps[recallIndex];
-  recallResults[recallIndex] = correct;
-  bumpMastery(step.itemId, correct);
-  recallAwaitingNext = true;
-  renderRecall();
-}
-
-function advanceRecall() {
-  recallIndex++;
-  recallAwaitingNext = false;
-  recallBodyRevealed = false;
-  if (recallIndex >= recallSteps.length) recallFinished = true;
-  renderRecall();
-}
-
-function renderRecallSummary() {
-  const total = recallSteps.length;
-  const correctCount = recallResults.filter(r => r === true).length;
-  const pct = total ? Math.round((correctCount / total) * 100) : 100;
-  const color = pct === 100 ? 'var(--green)' : pct >= 60 ? 'var(--amber)' : 'var(--red)';
-  const rowsHtml = recallSteps.map((step, i) => {
-    const ok = recallResults[i];
-    const cls = ok ? 'correct' : 'incorrect';
-    const icon = ok ? '✓' : '✕';
-    const iconColor = ok ? 'var(--green)' : 'var(--red)';
-    const labelBit = (step.label && !hidePrompts) ? `${step.label} ` : '';
-    return `<li class="order-item ${cls}">
-      <span class="num" style="color:${iconColor};">${icon}</span>
-      <span class="item-title">${step.listLabel} · ${step.itemTitle} — ${labelBit}${step.text}</span>
-    </li>`;
-  }).join('');
-  app.innerHTML = `
-    <div class="card">
-      <div class="eyebrow">Quick Recall · Results</div>
-      <div style="margin-bottom:14px;">
-        <span class="score-badge" style="background:${color}22;color:${color};">${correctCount}/${total} correct</span>
-      </div>
-      <ul class="order-list">${rowsHtml}</ul>
-      <div class="btnrow" style="margin-top:14px;">
-        <button class="btn primary" id="recallRestart">Start over</button>
-      </div>
-    </div>
-  `;
-  document.getElementById('recallRestart').addEventListener('click', () => { startRecallSession(); renderRecall(); });
-}
-
-// ----- VERBAL PRACTICE -----
-let verbalSteps = [];
-let verbalIndex = 0;
-let verbalResults = [];
-let verbalFinished = false;
-
-function splitSentences(text) {
-  const matches = text.match(/[^.!?]+[.!?]+/g);
-  if (!matches) return [text.trim()];
-  return matches.map(s => s.trim()).filter(Boolean);
-}
-
-function buildVerbalSteps(scope) {
-  const steps = [];
-  if (scope !== 'points') {
-    fiveHabits.forEach((h, idx) => {
-      const itemNumber = idx + 1, listTotal = fiveHabits.length;
-      const base = { itemId: h.id, itemTitle: h.name, listLabel: '5s', itemNumber, listTotal };
-      steps.push({ ...base, label: null, text: h.name, part: 'title' });
-      steps.push({ ...base, label: 'How do you do it?', text: h.how, part: 'how' });
-      steps.push({ ...base, label: 'What does it do for you?', text: h.what, part: 'what' });
-      steps.push({ ...base, label: 'Key Phrase', text: `Remember, "${h.key}"`, part: 'key' });
-    });
-  }
-  if (scope !== 'habits') {
-    tenPoints.forEach((p, idx) => {
-      const itemNumber = idx + 1, listTotal = tenPoints.length;
-      const base = { itemId: p.id, itemTitle: p.title, listLabel: '10s', itemNumber, listTotal };
-      steps.push({ ...base, label: null, text: p.title, part: 'title' });
-      const overrides = splitLongSentences ? VERBAL_SENTENCE_SPLITS[p.id] : null;
-      splitSentences(getPointBodyText(p)).forEach(sentence => {
-        const parts = (overrides && overrides[sentence]) ? overrides[sentence] : [sentence];
-        parts.forEach(part => steps.push({ ...base, label: null, text: part, part: 'body' }));
-      });
-      steps.push({ ...base, label: 'Why?', text: p.why, part: 'why' });
-    });
-  }
-  return steps;
-}
-
-let verbalAwaitingNext = false; // true once the current sentence has been marked, waiting for "Reveal next"
-
-function startVerbalSession() {
-  verbalSteps = buildVerbalSteps(quizScope);
-  verbalIndex = 0;
-  verbalResults = new Array(verbalSteps.length).fill(null);
-  verbalFinished = false;
-  verbalAwaitingNext = false;
-}
-
-// Jump to the first step of the next/previous item (habit or point), skipping past
-// however many sentences that item has — lets Prev/Next move item-by-item like the
-// other modes, even though verbal steps are broken down sentence-by-sentence.
-function verbalItemStartIndex(fromIndex) {
-  const id = verbalSteps[fromIndex].itemId;
-  let i = fromIndex;
-  while (i > 0 && verbalSteps[i - 1].itemId === id) i--;
-  return i;
-}
-function verbalNextItem() {
-  if (!verbalSteps.length) return;
-  const curId = verbalSteps[Math.min(verbalIndex, verbalSteps.length - 1)].itemId;
-  let idx = verbalSteps.findIndex((s, i) => i > verbalIndex && s.itemId !== curId);
-  if (idx === -1) idx = 0; // wrap to the very first item
-  verbalIndex = idx;
-  verbalAwaitingNext = false;
-  verbalFinished = false;
-  renderVerbal();
-}
-function verbalPrevItem() {
-  if (!verbalSteps.length) return;
-  const curStart = verbalItemStartIndex(Math.min(verbalIndex, verbalSteps.length - 1));
-  if (curStart === 0) {
-    verbalIndex = verbalItemStartIndex(verbalSteps.length - 1); // wrap to last item's start
-  } else {
-    verbalIndex = verbalItemStartIndex(curStart - 1);
-  }
-  verbalAwaitingNext = false;
-  verbalFinished = false;
-  renderVerbal();
-}
-
-function renderVerbal() {
-  if (!verbalSteps.length) startVerbalSession();
-  if (verbalFinished) { renderVerbalSummary(); return; }
-  const step = verbalSteps[verbalIndex];
-  const labelHtml = (!hidePrompts && step.label) ? `<div class="cloze-heading" style="margin-bottom:8px;">${step.label}</div>` : '';
-  const buttonsHtml = verbalAwaitingNext
-    ? `<div class="btnrow" style="margin-top:20px;">
-         <button class="btn primary" id="verbalNext">Reveal next</button>
-       </div>`
-    : `<div class="btnrow" style="margin-top:20px;">
-         <button class="btn miss" id="verbalMiss">Missed it</button>
-         <button class="btn got" id="verbalGot">Got it</button>
-       </div>`;
-  app.innerHTML = `
-    <div class="card" id="verbalCard">
-      <div class="eyebrow">${step.listLabel} · Item ${step.itemNumber} of ${step.listTotal} · Verbal Practice · Sentence ${verbalIndex + 1} of ${verbalSteps.length}</div>
-      ${labelHtml}
-      <div class="flash-title" style="text-align:left; font-size:1.15rem; line-height:1.4;">${step.text}</div>
-      ${buttonsHtml}
-      <div class="cloze-nav" style="margin-top:14px; margin-bottom:0;">
-        <button class="btn ghost" id="btnVerbalPrev">‹ Prev item</button>
-        <button class="btn ghost" id="btnVerbalNext">Next item ›</button>
-      </div>
-    </div>
-    <div class="helptext">Say it out loud, then mark whether you got it right. You'll see everything you missed at the end. Prev/Next item jumps to the start of the previous or next habit/point.</div>
-  `;
-  const cardEl = document.getElementById('verbalCard');
-  if (cardEl) cardEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  const missBtn = document.getElementById('verbalMiss');
-  const gotBtn = document.getElementById('verbalGot');
-  const nextBtn = document.getElementById('verbalNext');
-  if (missBtn) missBtn.addEventListener('click', () => recordVerbal(false));
-  if (gotBtn) gotBtn.addEventListener('click', () => recordVerbal(true));
-  if (nextBtn) nextBtn.addEventListener('click', advanceVerbal);
-  document.getElementById('btnVerbalPrev').addEventListener('click', verbalPrevItem);
-  document.getElementById('btnVerbalNext').addEventListener('click', verbalNextItem);
-}
-
-function recordVerbal(correct) {
-  const step = verbalSteps[verbalIndex];
-  verbalResults[verbalIndex] = correct;
-  bumpMastery(step.itemId, correct);
-  verbalAwaitingNext = true; // keep this sentence on screen; swap buttons for "Reveal next"
-  renderVerbal();
-}
-
-function advanceVerbal() {
-  verbalIndex++;
-  verbalAwaitingNext = false;
-  if (verbalIndex >= verbalSteps.length) verbalFinished = true;
-  renderVerbal();
-}
-
-function renderVerbalSummary() {
-  const total = verbalSteps.length;
-  const correctCount = verbalResults.filter(r => r === true).length;
-  const pct = total ? Math.round((correctCount / total) * 100) : 100;
-  const color = pct === 100 ? 'var(--green)' : pct >= 60 ? 'var(--amber)' : 'var(--red)';
-  const rowsHtml = verbalSteps.map((step, i) => {
-    const ok = verbalResults[i];
-    const cls = ok ? 'correct' : 'incorrect';
-    const icon = ok ? '✓' : '✕';
-    const iconColor = ok ? 'var(--green)' : 'var(--red)';
-    const labelBit = (step.label && !hidePrompts) ? `${step.label} ` : '';
-    return `<li class="order-item ${cls}">
-      <span class="num" style="color:${iconColor};">${icon}</span>
-      <span class="item-title">${step.listLabel} · ${step.itemTitle} — ${labelBit}${step.text}</span>
-    </li>`;
-  }).join('');
-  app.innerHTML = `
-    <div class="card">
-      <div class="eyebrow">Verbal Practice · Results</div>
-      <div style="margin-bottom:14px;">
-        <span class="score-badge" style="background:${color}22;color:${color};">${correctCount}/${total} correct</span>
-      </div>
-      <ul class="order-list">${rowsHtml}</ul>
-      <div class="btnrow" style="margin-top:14px;">
-        <button class="btn primary" id="verbalRestart">Start over</button>
-      </div>
-    </div>
-  `;
-  document.getElementById('verbalRestart').addEventListener('click', () => { startVerbalSession(); renderVerbal(); });
-}
-
-// ----- PROGRESS -----
-function renderProgress() {
-  function rows(list, label) {
-    return `<div class="sec-label">${label}</div>` + list.map(item => {
-      const m = mastery[item.id] || {level:0,seen:0,correct:0};
-      const pct = (m.level/5)*100;
-      const color = m.level >= 4 ? 'var(--green)' : m.level >= 2 ? 'var(--amber)' : 'var(--red)';
-      return `<tr>
-        <td>${item.name || item.title}</td>
-        <td style="width:120px;"><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color};"></div></div></td>
-        <td style="width:50px; text-align:right; font-family:var(--mono); color:${color};">${m.level}/5</td>
-        <td style="width:60px; text-align:right; font-family:var(--mono); color:var(--text-dim2);">${m.seen} reps</td>
-      </tr>`;
-    }).join('');
-  }
-  app.innerHTML = `
-    <div class="card">
-      <div class="eyebrow">Progress</div>
-      <div class="table-scroll">
-        <table class="progress">
-          <tbody>
-            ${rows(fiveHabits, 'Five Seeing Habits')}
-            ${rows(tenPoints, '10 Point Commentary')}
-          </tbody>
-        </table>
-      </div>
-      <div class="helptext" style="margin-top:14px; margin-bottom:0;">Want to start over? Reset progress is in Settings (⚙, top right).</div>
-    </div>
-  `;
-}
-
-// ---------- SETTINGS MENU ----------
-function openSettings() {
-  const note = document.getElementById('storageNote');
-  note.textContent = Store.backend === 'claude'
-    ? 'Progress is saved to your Claude account and stays private to you.'
-    : 'Progress is saved in this browser only. Switching devices or browsers starts fresh.';
-  document.getElementById('settingsOverlay').classList.add('open');
-}
-function closeSettings() {
-  document.getElementById('settingsOverlay').classList.remove('open');
-}
-document.getElementById('settingsBtn').addEventListener('click', openSettings);
-document.getElementById('settingsClose').addEventListener('click', closeSettings);
-document.getElementById('settingsOverlay').addEventListener('click', (e) => {
-  if (e.target.id === 'settingsOverlay') closeSettings();
-});
-document.getElementById('settingsResetProgress').addEventListener('click', async () => {
-  if (confirm('Reset all mastery progress? This cannot be undone.')) {
-    mastery = defaultMastery();
-    await saveMastery();
-    updateStreakDisplay();
-    closeSettings();
-    render();
-  }
-});
-document.getElementById('settingsBlankTitles').addEventListener('change', (e) => {
-  blankTitles = e.target.checked;
-  saveBlankTitles();
-  if (currentMode === 'cloze') {
-    clozeItem = null; // force a fresh cloze item so the new setting takes effect immediately
-    render();
-  }
-});
-document.getElementById('settingsHidePrompts').addEventListener('change', (e) => {
-  hidePrompts = e.target.checked;
-  saveHidePrompts();
-  if (currentMode === 'cloze') clozeItem = null; // heading tokens are built at pool time, need a fresh item
-  if (currentMode === 'type') typeItem = null;
-  if (currentMode === 'qtype') qtItem = null;
-  if (currentMode === 'order') recallSteps = [];
-  if (['flash','cloze','type','qtype','order','verbal'].includes(currentMode)) render();
-});
-document.getElementById('settingsMasterySpeedHabits').addEventListener('change', (e) => {
-  masterySpeedHabits = parseInt(e.target.value) || 1;
-  saveMasterySpeed();
-});
-document.getElementById('settingsMasterySpeedPoints').addEventListener('change', (e) => {
-  masterySpeedPoints = parseInt(e.target.value) || 1;
-  saveMasterySpeed();
-});
-document.getElementById('settingsTypeTitles').addEventListener('change', (e) => {
-  typeIncludeTitles = e.target.checked;
-  saveTypeIncludeTitles();
-  if (currentMode === 'type') { typeItem = null; render(); } // pool structure changed, need a fresh item
-});
-document.getElementById('settingsSplitSentences').addEventListener('change', (e) => {
-  splitLongSentences = e.target.checked;
-  saveSplitLongSentences();
-  if (currentMode === 'verbal') { verbalSteps = []; render(); } // step list changes length, need a fresh session
-});
-document.getElementById('settingsTenSummaryMode').addEventListener('change', (e) => {
-  tenSummaryMode = e.target.checked;
-  saveTenSummaryMode();
-  // body text length/content changed for every 10s item — force a fresh pick everywhere it's used
-  clozeItem = null;
-  typeItem = null;
-  recallSteps = [];
-  verbalSteps = [];
-  if (['cloze','type','order','verbal'].includes(currentMode)) render();
-});
-
-// ---------- 10s SUMMARY EDITOR ----------
-function openSummaryEditor() {
-  const list = document.getElementById('summaryEditList');
-  list.innerHTML = tenPoints.map(p => {
-    const current = (tenSummaryCustom[p.id] !== undefined && tenSummaryCustom[p.id] !== null && tenSummaryCustom[p.id] !== '')
-      ? tenSummaryCustom[p.id] : TEN_SUMMARIES_DEFAULT[p.id];
-    return `
-      <div style="margin-bottom:16px;">
-        <div class="settings-row-title" style="margin-bottom:6px;">${p.title}</div>
-        <textarea class="answer summary-edit-box" data-id="${p.id}" style="min-height:60px; font-size:0.85rem;">${current}</textarea>
-        <button class="reset-link" data-reset-id="${p.id}" style="margin-top:4px;">reset to default</button>
-      </div>
     `;
+  }
+
+  app.innerHTML = `
+    <div class="card" id="mainCard">
+      <div class="eyebrow">Section ${idx + 1} of ${cards.length}</div>
+      ${bodyHtml}
+      <div class="nav-row">
+        <button class="btn ghost" id="btnPrev">‹ Prev section</button>
+        <button class="btn ghost" id="btnJumpNext">Next section ›</button>
+      </div>
+    </div>
+    <div class="helptext">Look at the photo and say the section out loud from memory, then reveal to check. Prev/Next jump straight to a section if you want to drill just one part.</div>
+  `;
+  const mainCard = document.getElementById('mainCard');
+  if (mainCard) mainCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const revealBtn = document.getElementById('btnReveal');
+  const missBtn = document.getElementById('btnMiss');
+  const gotBtn = document.getElementById('btnGot');
+  const nextBtn = document.getElementById('btnNext');
+  if (revealBtn) revealBtn.addEventListener('click', () => { revealed = true; render(); });
+  if (missBtn) missBtn.addEventListener('click', () => record(false));
+  if (gotBtn) gotBtn.addEventListener('click', () => record(true));
+  if (nextBtn) nextBtn.addEventListener('click', advance);
+  document.getElementById('btnPrev').addEventListener('click', () => goTo(idx - 1));
+  document.getElementById('btnJumpNext').addEventListener('click', () => goTo(idx + 1));
+}
+
+
+function renderEditor() {
+  const sectionOptions = cards.map((c, i) => `<option value="${i}">${i + 1}. ${escapeHtml(c.title)}</option>`).join('');
+  const sectionsHtml = cards.map((card, sectionIndex) => {
+    const itemsHtml = card.items.map((text, itemIndex) => `
+      <div class="editor-item" data-section="${sectionIndex}" data-item="${itemIndex}">
+        <textarea class="item-text" data-action="text">${escapeHtml(text)}</textarea>
+        <div class="item-actions">
+          <button class="mini-btn" data-action="up" title="Move up">↑</button>
+          <button class="mini-btn" data-action="down" title="Move down">↓</button>
+          <button class="mini-btn delete" data-action="delete" title="Delete item">×</button>
+        </div>
+        <div class="move-row">
+          <select data-action="move-select" aria-label="Move item to section">${sectionOptions.replace(`value="${sectionIndex}"`, `value="${sectionIndex}" selected`)}</select>
+          <button class="mini-btn" data-action="move">Move</button>
+        </div>
+      </div>`).join('');
+    return `
+      <div class="editor-section">
+        <div class="editor-title">${sectionIndex + 1}. ${escapeHtml(card.title)}</div>
+        <div>${itemsHtml || '<div class="helptext">No items in this section.</div>'}</div>
+        <button class="btn ghost add-item" data-action="add" data-section="${sectionIndex}">+ Add item</button>
+      </div>`;
   }).join('');
-  list.querySelectorAll('[data-reset-id]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.resetId;
-      const box = list.querySelector(`textarea[data-id="${id}"]`);
-      if (box) box.value = TEN_SUMMARIES_DEFAULT[id];
-    });
-  });
-  document.getElementById('summaryEditOverlay').classList.add('open');
-}
-function closeSummaryEditor() {
-  document.getElementById('summaryEditOverlay').classList.remove('open');
-}
-document.getElementById('settingsEditSummaries').addEventListener('click', openSummaryEditor);
-document.getElementById('summaryEditClose').addEventListener('click', closeSummaryEditor);
-document.getElementById('summaryEditCancel').addEventListener('click', closeSummaryEditor);
-document.getElementById('summaryEditOverlay').addEventListener('click', (e) => {
-  if (e.target.id === 'summaryEditOverlay') closeSummaryEditor();
-});
-document.getElementById('summaryEditSave').addEventListener('click', async () => {
-  const boxes = document.querySelectorAll('.summary-edit-box');
-  const next = {};
-  boxes.forEach(box => {
-    const id = box.dataset.id;
-    const val = box.value.trim();
-    if (val && val !== TEN_SUMMARIES_DEFAULT[id]) next[id] = val;
-  });
-  tenSummaryCustom = next;
-  await saveTenSummaryCustom();
-  // summaries changed — force a fresh pick everywhere they're used
-  clozeItem = null;
-  typeItem = null;
-  recallSteps = [];
-  verbalSteps = [];
-  closeSummaryEditor();
-  if (['cloze','type','order','verbal'].includes(currentMode)) render();
-});
 
-// ---------- BACKUP & RESTORE ----------
-const BACKUP_KEYS = [
-  'mastery-data', 'font-scale', 'quiz-scope', 'quiz-mode', 'blank-titles', 'hide-prompts',
-  'mastery-speed-habits', 'mastery-speed-points', 'type-include-titles', 'item-order-mode',
-  'split-long-sentences', 'ten-summary-mode', 'ten-summary-custom'
-];
+  app.innerHTML = `
+    <div class="card">
+      <div class="eyebrow">Customize checklist</div>
+      <div class="editor-toolbar">
+        <button class="btn ghost" id="btnExport">Export</button>
+        <button class="btn ghost" id="btnImport">Import</button>
+        <button class="btn ghost" id="btnResetDefaults">Reset defaults</button>
+      </div>
+      <input class="file-input" type="file" id="importFile" accept="application/json,.json">
+      <div class="status-note" id="editorStatus">Changes save automatically on this device. Export a JSON file to move them to another device.</div>
+      ${sectionsHtml}
+    </div>`;
 
-async function buildBackupJson() {
-  const data = {};
-  for (const key of BACKUP_KEYS) {
-    const val = await Store.get(key);
-    if (val !== null && val !== undefined) data[key] = val;
-  }
-  return JSON.stringify({ app: 'ups-5s-10s', version: 1, exportedAt: new Date().toISOString(), data }, null, 2);
+  app.querySelectorAll('.item-text').forEach(el => el.addEventListener('change', handleEditorAction));
+  app.querySelectorAll('[data-action="up"],[data-action="down"],[data-action="delete"],[data-action="move"]').forEach(el => el.addEventListener('click', handleEditorAction));
+  app.querySelectorAll('[data-action="add"]').forEach(el => el.addEventListener('click', handleEditorAction));
+  document.getElementById('btnExport').addEventListener('click', exportChanges);
+  document.getElementById('btnImport').addEventListener('click', () => document.getElementById('importFile').click());
+  document.getElementById('importFile').addEventListener('change', importChanges);
+  document.getElementById('btnResetDefaults').addEventListener('click', resetDefaults);
 }
 
-async function applyBackupJson(jsonText) {
-  const statusEl = document.getElementById('backupStatus');
-  let payload;
-  try {
-    payload = JSON.parse(jsonText);
-  } catch (e) {
-    statusEl.textContent = "That doesn't look like valid backup JSON.";
-    return;
+function handleEditorAction(e) {
+  const action = e.currentTarget.dataset.action;
+  if (action === 'add') {
+    const s = Number(e.currentTarget.dataset.section);
+    cards[s].items.push('New item');
+    saveCards(); render(); return;
   }
-  if (!payload || typeof payload.data !== 'object') {
-    statusEl.textContent = "That file doesn't look like a backup from this app.";
-    return;
-  }
-  if (!confirm('Import this backup? It will overwrite your current progress and settings.')) return;
-  for (const [key, val] of Object.entries(payload.data)) {
-    if (BACKUP_KEYS.includes(key) && val !== null && val !== undefined) {
-      await Store.set(key, val);
+  const row = e.currentTarget.closest('.editor-item');
+  const s = Number(row.dataset.section);
+  const i = Number(row.dataset.item);
+  if (action === 'text') {
+    const value = e.currentTarget.value.trim();
+    cards[s].items[i] = value || 'Untitled item';
+  } else if (action === 'up' && i > 0) {
+    [cards[s].items[i - 1], cards[s].items[i]] = [cards[s].items[i], cards[s].items[i - 1]];
+  } else if (action === 'down' && i < cards[s].items.length - 1) {
+    [cards[s].items[i + 1], cards[s].items[i]] = [cards[s].items[i], cards[s].items[i + 1]];
+  } else if (action === 'delete') {
+    if (!confirm('Delete this checklist item?')) return;
+    cards[s].items.splice(i, 1);
+  } else if (action === 'move') {
+    const target = Number(row.querySelector('[data-action="move-select"]').value);
+    if (target !== s) {
+      const [item] = cards[s].items.splice(i, 1);
+      cards[target].items.push(item);
     }
   }
-  statusEl.textContent = 'Import complete — reloading…';
-  setTimeout(() => location.reload(), 600);
+  saveCards();
+  render();
 }
 
-function openBackup() {
-  document.getElementById('backupStatus').textContent = '';
-  document.getElementById('backupImportText').value = '';
-  buildBackupJson().then(json => { document.getElementById('backupExportText').value = json; });
-  document.getElementById('backupOverlay').classList.add('open');
-}
-function closeBackup() {
-  document.getElementById('backupOverlay').classList.remove('open');
-}
-document.getElementById('settingsBackupRestore').addEventListener('click', openBackup);
-document.getElementById('backupClose').addEventListener('click', closeBackup);
-document.getElementById('backupOverlay').addEventListener('click', (e) => {
-  if (e.target.id === 'backupOverlay') closeBackup();
-});
-document.getElementById('backupCopy').addEventListener('click', async () => {
-  const text = document.getElementById('backupExportText').value;
-  try {
-    await navigator.clipboard.writeText(text);
-    document.getElementById('backupStatus').textContent = 'Copied to clipboard.';
-  } catch (e) {
-    document.getElementById('backupStatus').textContent = "Couldn't copy automatically — select the text above and copy it manually.";
-  }
-});
-document.getElementById('backupDownload').addEventListener('click', () => {
-  const text = document.getElementById('backupExportText').value;
-  const blob = new Blob([text], { type: 'application/json' });
+function exportChanges() {
+  const blob = new Blob([JSON.stringify(exportPayload(), null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'ups-5s-10s-backup.json';
+  a.download = 'ups-pretrip-custom-checklist.json';
   document.body.appendChild(a);
   a.click();
-  document.body.removeChild(a);
+  a.remove();
   URL.revokeObjectURL(url);
-});
-document.getElementById('backupFileInput').addEventListener('change', (e) => {
-  const file = e.target.files[0];
+}
+
+function importChanges(e) {
+  const file = e.target.files && e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = () => { document.getElementById('backupImportText').value = reader.result; };
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!isValidImport(data)) throw new Error('This file does not match this pretrip checklist.');
+      cards = data.sections.map((s, i) => ({ title: defaultCards[i].title, items: [...s.items] }));
+      saveCards();
+      render();
+      alert('Checklist imported successfully.');
+    } catch (err) {
+      alert('Import failed: ' + err.message);
+    }
+  };
   reader.readAsText(file);
-});
-document.getElementById('backupImportBtn').addEventListener('click', () => {
-  const text = document.getElementById('backupImportText').value.trim();
-  if (!text) { document.getElementById('backupStatus').textContent = 'Paste or choose a backup file first.'; return; }
-  applyBackupJson(text);
+}
+
+function resetDefaults() {
+  if (!confirm('Reset every checklist item to the original defaults?')) return;
+  cards = cloneDefaults();
+  saveCards();
+  render();
+}
+
+function goTo(target) {
+  let t = target;
+  if (t < 0) t = cards.length - 1;
+  if (t >= cards.length) t = 0;
+  idx = t;
+  revealed = false;
+  awaitingNext = false;
+  finished = false;
+  render();
+}
+
+function record(correct) {
+  results[idx] = correct;
+  awaitingNext = true;
+  render();
+}
+
+function advance() {
+  idx++;
+  revealed = false;
+  awaitingNext = false;
+  if (idx >= cards.length) finished = true;
+  render();
+}
+
+function renderReport() {
+  const total = cards.length;
+  const correctCount = results.filter(r => r === true).length;
+  const pct = Math.round((correctCount / total) * 100);
+  const color = pct === 100 ? 'var(--green)' : pct >= 70 ? 'var(--amber)' : 'var(--red)';
+  const rows = cards.map((card, i) => {
+    const ok = results[i];
+    const cls = ok ? 'correct' : 'incorrect';
+    const icon = ok ? '✓' : '✕';
+    const iconColor = ok ? 'var(--green)' : 'var(--red)';
+    const itemsHtml = card.items.map(t => `<li>${escapeHtml(t)}</li>`).join('');
+    return `<li class="report-item ${cls}">
+      <div class="report-header"><span class="icon" style="color:${iconColor};">${icon}</span><span>${i + 1}. ${escapeHtml(card.title)}</span></div>
+      <ul class="check-list">${itemsHtml}</ul>
+    </li>`;
+  }).join('');
+  app.innerHTML = `
+    <div class="card">
+      <div class="eyebrow">Report Card</div>
+      <div style="margin-bottom:6px;">
+        <span class="score-badge" style="background:${color}22;color:${color};">${correctCount}/${total} sections correct</span>
+      </div>
+      <ul class="report-list">${rows}</ul>
+      <div class="btnrow" style="margin-top:16px;">
+        <button class="btn primary" id="btnRestart">Start over</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('btnRestart').addEventListener('click', () => {
+    idx = 0;
+    results = new Array(cards.length).fill(null);
+    revealed = false;
+    awaitingNext = false;
+    finished = false;
+    render();
+  });
+}
+
+document.getElementById('btnEditMode').addEventListener('click', () => {
+  editing = !editing;
+  finished = false;
+  revealed = false;
+  awaitingNext = false;
+  render();
 });
 
-// ---------- INIT ----------
-Promise.all([loadScope(), loadFontScale(), loadMastery(), loadMode(), loadBlankTitles(), loadHidePrompts(), loadMasterySpeed(), loadTypeIncludeTitles(), loadItemOrderMode(), loadSplitLongSentences(), loadTenSummaryMode(), loadTenSummaryCustom()]).then(render);
+render();
 </script>
 </body>
 </html>
